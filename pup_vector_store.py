@@ -21,11 +21,12 @@ from dp_accounting.pld.common import DifferentialPrivacyParameters
 from test_data import print_items, simple_medical_messages, hair_color_messages, hair_color_documents, medical_dirichlet_documents
 
 class PUPVectorStoreConfig:
-    def __init__(self, model_id: str = "Snowflake/snowflake-arctic-embed-m-v1.5", top_k: int | None = None, top_p: float | None = None, top_p_alpha: float = 5.0, min_score: float = -0.5, max_score: float = 0.8,  epsilon: float = 0.1, max_retrieve: int = 128, differential_pivacy: bool = True):
+    def __init__(self, model_id: str = "Snowflake/snowflake-arctic-embed-m-v1.5", top_k: int | None = None, top_p: float | None = None, top_p_alpha: float = 5.0, min_score: float = -0.5, max_score: float = 0.8,  epsilon: float = 0.1, max_retrieve: int = 128, differential_pivacy: bool = True, batch_size: int = 32):
         """
         alpha: the concentration of scores around top scores
         pi: the cumulated share of weight to select
         max_score: a level above wich the weight saturates
+        batch_size: how many documents to embed per forward pass (caps peak memory)
         """
         self.model_id = model_id
         self.top_k = top_k
@@ -36,6 +37,7 @@ class PUPVectorStoreConfig:
         self.epsilon = epsilon
         self.max_retrieve = max_retrieve
         self.differential_pivacy = differential_pivacy
+        self.batch_size = batch_size
 
 class PUPVectorStore:
     def __init__(self, config: PUPVectorStoreConfig):
@@ -59,6 +61,7 @@ Possible choices are:
         self.max_retrieve = config.max_retrieve
         self.privacy_loss_distribution = from_privacy_parameters(DifferentialPrivacyParameters(epsilon=self.epsilon))
         self.differential_pivacy = config.differential_pivacy
+        self.batch_size = config.batch_size
     
     @cached_property
     def model(self) -> PreTrainedModel:
@@ -76,7 +79,7 @@ Possible choices are:
     def cls_pooling(self, model_output: BaseModelOutput) -> Tensor:
         return model_output.last_hidden_state[:,0]
 
-    def encode(self, texts: list[str]) -> Tensor:
+    def _encode_batch(self, texts: list[str]) -> Tensor:
         encoded_input = self.tokenizer(texts, padding=True, truncation=True, return_tensors='pt').to(self.model.device)
         # Compute token embeddings
         with torch.no_grad():
@@ -86,6 +89,19 @@ Possible choices are:
         # Normalize
         embeddings /= torch.sqrt(torch.sum(torch.square(embeddings), dim=1, keepdim=True))
         return embeddings
+
+    def encode(self, texts: list[str] | str) -> Tensor:
+        # Accept a single string (used for queries) as well as a list.
+        if isinstance(texts, str):
+            texts = [texts]
+        # Embed in mini-batches so peak memory scales with batch_size, not with
+        # the number of documents (padding a giant batch to the longest doc was
+        # the main memory hog).
+        batches = [
+            self._encode_batch(texts[start:start + self.batch_size])
+            for start in range(0, len(texts), self.batch_size)
+        ]
+        return torch.cat(batches, dim=0)
 
     def add(self, entry: str):
         if not entry in self.index:
