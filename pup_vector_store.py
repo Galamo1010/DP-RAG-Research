@@ -62,7 +62,8 @@ Possible choices are:
     
     @cached_property
     def model(self) -> PreTrainedModel:
-        result = AutoModel.from_pretrained(self.model_id, device_map='cuda')
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        result = AutoModel.from_pretrained(self.model_id, device_map=device)
         result = result.eval()
         return result
     
