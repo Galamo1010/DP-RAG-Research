@@ -2,8 +2,8 @@
 
 Run with:  uv run python test_embed.py
 
-It does NOT touch OpenRouter and does NOT download the medical dataset — it uses
-locally generated fake documents, so it's a fast way to confirm that:
+It does NOT download the medical dataset — it uses locally generated fake
+documents, so it's a fast way to confirm that:
   1. the embedding model loads (on GPU if available, else CPU),
   2. mini-batch encoding gives the SAME result as encoding everything at once,
   3. peak memory stays bounded,

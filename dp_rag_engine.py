@@ -1,35 +1,24 @@
 from termcolor import colored, cprint
 from pup_vector_store import PUPVectorStore, PUPVectorStoreConfig
-from dp_model import DPGenerationConfig
-from openrouter_model import OpenRouterModel
+from dp_model import DPModel, DPGenerationConfig
 from test_data import print_items, medical_dirichlet_documents
 
 class DPRAGEngine:
-    """RAG engine whose *generation* runs through OpenRouter.
-
-    NOTE: OpenRouter is a text-only chat API, so the token-level differential
-    privacy of ``dp_model.DPModel`` cannot be applied here. Generation is a
-    standard (non-DP) RAG call. The differential-privacy guarantee of the
-    *retrieval* step (``PUPVectorStore``) is preserved, so
-    ``privacy_loss_distribution`` reflects retrieval only.
-    """
     def __init__(
             self,
             pup_vector_store_config: PUPVectorStoreConfig = PUPVectorStoreConfig(),
-            model_id: str | None = None,
+            model_id="microsoft/Phi-3.5-mini-instruct",
             dp_generation_config: DPGenerationConfig = DPGenerationConfig(),
-
+            
         ):
         self.pup_vector_store: PUPVectorStore = PUPVectorStore(config=pup_vector_store_config)
-        # model_id=None lets OpenRouterModel pick it from OPENROUTER_MODEL / default.
-        self.generation_model: OpenRouterModel = OpenRouterModel(model_id=model_id)
+        self.dp_model: DPModel = DPModel(model_id=model_id)
         self.dp_generation_config = dp_generation_config
-        # Only retrieval contributes to the privacy loss now (generation is non-DP).
-        self.privacy_loss_distribution = self.pup_vector_store.privacy_loss_distribution
-
+        self.privacy_loss_distribution = self.pup_vector_store.privacy_loss_distribution.compose(dp_generation_config.privacy_loss_distribution)
+    
     def add(self, entry: str):
         self.pup_vector_store.add(entry)
-
+    
     def pup_retrieve(self, query: str) -> list[str]:
         return self.pup_vector_store.pup_retrieve(query=query)
 
@@ -38,11 +27,10 @@ class DPRAGEngine:
         # DEBUG
         # print(len(retrieved_documents))
         # print_items(retrieved_documents[:3], ['dark_grey', 'light_grey'])
-        return self.generation_model.rag_chat(
+        return self.dp_model.dp_chat(
             retrieved_documents,
             question,
-            temperature=self.dp_generation_config.temperature,
-            max_tokens=self.dp_generation_config.max_new_tokens,
+            self.dp_generation_config,
         )
 
 

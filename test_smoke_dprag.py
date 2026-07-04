@@ -1,8 +1,13 @@
-"""Smoke test: original DP-RAG (OpenRouter build) on ChatDoctor data.
+"""Smoke test: original DP-RAG (local two-layer DP build) on ChatDoctor data.
 
-Corpus : 1000 HealthCareMagic doctor replies -> DP retrieval (exponential mechanism)
-Queries: 20 iCliniq patient questions
-Generation: OpenRouter (NON-DP; this machine has no GPU for token-level DP generation)
+Corpus : N_DOCS HealthCareMagic doctor replies -> DP retrieval (exponential mechanism)
+Queries: N_QUERIES iCliniq patient questions
+Generation: local DPModel (token-level DP; k+1 parallel streams, exp mechanism)
+
+Both privacy layers are kept, so the reported epsilon is the real end-to-end
+budget (retrieval PLD composed with generation PLD).
+
+Requires a CUDA GPU.
 
 Run:  ./.venv/Scripts/python.exe test_smoke_dprag.py
 """
@@ -19,8 +24,10 @@ import experiment_params as P
 
 N_DOCS = 10000
 N_QUERIES = 20
-MAX_RETRIEVE = 10  # cap retrieved docs to keep the prompt small/cheap for this smoke test
+MAX_RETRIEVE = 10  # cap retrieved docs to keep the k+1 batch small/cheap for this smoke test
 CORPUS_SEED = 7    # random-sample the corpus for better topic coverage
+GEN_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"  # cached, ungated; swap for P.MODELS[0] on a bigger GPU
+GEN_EPSILON = 10.0                        # generation budget per full answer
 
 def main():
     print(f"Loading {N_DOCS} corpus docs (random sample) + {N_QUERIES} queries ...")
@@ -35,14 +42,17 @@ def main():
             max_retrieve=MAX_RETRIEVE,
             batch_size=P.EMBED_BATCH_SIZE,
         ),
-        model_id=P.MODELS[0],  # llama-3.1-8b-instruct
+        model_id=GEN_MODEL,
         dp_generation_config=DPGenerationConfig(
             temperature=P.TEMPERATURE,
             max_new_tokens=P.MAX_NEW_TOKENS,
+            alpha=P.ALPHA,
+            omega=P.OMEGA,
+            epsilon=GEN_EPSILON,
         ),
     )
 
-    print("Building vector store (embedding on CPU, please wait) ...")
+    print("Building vector store (embedding, please wait) ...")
     t0 = time.time()
     for doc in corpus:
         engine.add(doc)
@@ -50,17 +60,14 @@ def main():
     engine.pup_vector_store.embeddings()
     print(f"Embedded {len(corpus)} docs in {time.time() - t0:.1f}s")
 
-    eps_retrieval = engine.privacy_loss_distribution.get_epsilon_for_delta(P.DELTA)
-    print(f"Retrieval epsilon (delta={P.DELTA}): {eps_retrieval:.4f}\n")
+    eps_total = engine.privacy_loss_distribution.get_epsilon_for_delta(P.DELTA)
+    print(f"End-to-end epsilon (retrieval + generation, delta={P.DELTA}): {eps_total:.4f}\n")
 
     results = []
     for i, q in enumerate(queries):
         t = time.time()
         retrieved = engine.pup_retrieve(q.query)
-        answer = engine.generation_model.rag_chat(
-            retrieved, q.query,
-            temperature=P.TEMPERATURE, max_tokens=P.MAX_NEW_TOKENS,
-        )
+        answer = engine.dp_chat(q.query)
         dt = time.time() - t
         print(f"[{i+1:2}/{N_QUERIES}] retrieved={len(retrieved):2}  {dt:5.1f}s")
         print(f"   Q: {q.query[:100].replace(chr(10),' ')}")
@@ -79,8 +86,8 @@ def main():
         json.dump({
             "config": {
                 "n_docs": N_DOCS, "n_queries": N_QUERIES, "max_retrieve": MAX_RETRIEVE,
-                "eps_retrieval": eps_retrieval, "model": P.MODELS[0],
-                "note": "generation via OpenRouter is NON-DP (no local GPU)",
+                "eps_total": eps_total, "model": GEN_MODEL,
+                "note": "two-layer DP: DP retrieval + local DP generation (token-level)",
             },
             "results": results,
         }, f, ensure_ascii=False, indent=2)

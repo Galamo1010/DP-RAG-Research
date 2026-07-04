@@ -149,26 +149,12 @@ class DPLogitsAggregator(LogitsProcessor):
 
 
 class DPModel:
-    def __init__(self, model_id: str="meta-llama/Llama-3.2-1B-Instruct", load_in_4bit: bool=False):
+    def __init__(self, model_id: str="meta-llama/Llama-3.2-1B-Instruct"):
         self.model_id = model_id
-        # 4-bit (NF4) quantization lets 8B/9B/14B fit on a single 24GB (L4) or
-        # even the 8GB RTX 4060. Requires CUDA + bitsandbytes.
-        self.load_in_4bit = load_in_4bit
-
+    
     @cached_property
     def model(self) -> PreTrainedModel:
-        kwargs: dict[str, Any] = {"device_map": "cuda"}
-        if self.load_in_4bit:
-            from transformers import BitsAndBytesConfig
-            kwargs["quantization_config"] = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_quant_type="nf4",
-                bnb_4bit_compute_dtype=torch.float16,
-                bnb_4bit_use_double_quant=True,
-            )
-        else:
-            kwargs["torch_dtype"] = torch.float16
-        result = AutoModelForCausalLM.from_pretrained(self.model_id, **kwargs)
+        result = AutoModelForCausalLM.from_pretrained(self.model_id, device_map='cuda')
         result = result.eval()
         return result
     
