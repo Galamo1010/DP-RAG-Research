@@ -26,7 +26,8 @@ N_DOCS = 10000
 N_QUERIES = 20
 MAX_RETRIEVE = 10  # cap retrieved docs to keep the k+1 batch small/cheap for this smoke test
 CORPUS_SEED = 7    # random-sample the corpus for better topic coverage
-GEN_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"  # cached, ungated; swap for P.MODELS[0] on a bigger GPU
+# GEN_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"  # cached, ungated; swap for P.MODELS[0] on a bigger GPU
+GEN_MODEL = "meta-llama/llama-3.1-8b-instruct"  # cached, ungated; swap for P.MODELS[0] on a bigger GPU
 GEN_EPSILON = 10.0                        # generation budget per full answer
 
 def main():
