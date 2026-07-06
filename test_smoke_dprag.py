@@ -27,10 +27,13 @@ N_QUERIES = 20
 MAX_RETRIEVE = 10  # cap retrieved docs to keep the k+1 batch small/cheap for this smoke test
 CORPUS_SEED = 7    # random-sample the corpus for better topic coverage
 # GEN_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"  # cached, ungated; swap for P.MODELS[0] on a bigger GPU
-GEN_MODEL = "meta-llama/llama-3.1-8b-instruct"  # cached, ungated; swap for P.MODELS[0] on a bigger GPU
+GEN_MODEL = "meta-llama/Llama-3.1-8B-Instruct"  # gated; accept the license + huggingface-cli login
 GEN_EPSILON = 10.0                        # generation budget per full answer
+DP_ON = True   # False -> non-DP baseline (no clipping/noise) to check if garbled text is DP or a bug
 
 def main():
+    mode = "DP ON (two-layer)" if DP_ON else "DP OFF (non-private baseline)"
+    print(f"=== {mode} | model={GEN_MODEL} ===")
     print(f"Loading {N_DOCS} corpus docs (random sample) + {N_QUERIES} queries ...")
     corpus = load_corpus(limit=N_DOCS, sample_seed=CORPUS_SEED)
     queries = load_queries(n=N_QUERIES, seed=P.QUERY_SEED)
@@ -42,6 +45,7 @@ def main():
             epsilon=P.EPS_RETRIEVAL,
             max_retrieve=MAX_RETRIEVE,
             batch_size=P.EMBED_BATCH_SIZE,
+            differential_pivacy=DP_ON,
         ),
         model_id=GEN_MODEL,
         dp_generation_config=DPGenerationConfig(
@@ -50,6 +54,7 @@ def main():
             alpha=P.ALPHA,
             omega=P.OMEGA,
             epsilon=GEN_EPSILON,
+            differential_pivacy=DP_ON,
         ),
     )
 
@@ -62,7 +67,10 @@ def main():
     print(f"Embedded {len(corpus)} docs in {time.time() - t0:.1f}s")
 
     eps_total = engine.privacy_loss_distribution.get_epsilon_for_delta(P.DELTA)
-    print(f"End-to-end epsilon (retrieval + generation, delta={P.DELTA}): {eps_total:.4f}\n")
+    if DP_ON:
+        print(f"End-to-end epsilon (retrieval + generation, delta={P.DELTA}): {eps_total:.4f}\n")
+    else:
+        print(f"[DP OFF] nominal budget would be {eps_total:.4f}, but NO noise is applied this run\n")
 
     results = []
     for i, q in enumerate(queries):
@@ -82,13 +90,16 @@ def main():
         })
 
     os.makedirs("results", exist_ok=True)
-    out = f"results/smoke_{N_DOCS}x{N_QUERIES}.json"
+    tag = "dp" if DP_ON else "nodp"
+    out = f"results/smoke_{N_DOCS}x{N_QUERIES}_{tag}.json"
     with open(out, "w", encoding="utf-8") as f:
         json.dump({
             "config": {
                 "n_docs": N_DOCS, "n_queries": N_QUERIES, "max_retrieve": MAX_RETRIEVE,
-                "eps_total": eps_total, "model": GEN_MODEL,
-                "note": "two-layer DP: DP retrieval + local DP generation (token-level)",
+                "dp_on": DP_ON, "eps_total": eps_total, "model": GEN_MODEL,
+                "note": ("two-layer DP: DP retrieval + local DP generation (token-level)"
+                         if DP_ON else
+                         "DP OFF baseline: no clipping/noise; eps_total is nominal only"),
             },
             "results": results,
         }, f, ensure_ascii=False, indent=2)
