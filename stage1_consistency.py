@@ -151,12 +151,21 @@ def main():
         m_grd, n_grd = _consistency(norag, greedy)       # deterministic reference
         cr_out = m_out / n_out if n_out else 0.0
         cr_grd = m_grd / n_grd if n_grd else 0.0
+        # Decode the token streams so the rates are eyeball-checkable. Note the
+        # NoRAG/greedy "text" is a per-step overlay on DPRAG's shared prefix
+        # (teacher-forced), not an independent autoregressive generation.
+        tok = engine.dp_model.tokenizer
+        norag_text = tok.decode(norag, skip_special_tokens=True)
+        greedy_text = tok.decode(greedy, skip_special_tokens=True)
         per_query.append({
             "query": q.query,
             "n_retrieved": len(docs),
             "n_tokens": n_out,
             "consistency_sampled": cr_out,
             "consistency_greedy": cr_grd,
+            "dprag_text": text,                  # DPRAG's actual (sampled) output
+            "norag_argmax_text": norag_text,     # NoRAG top token per step, decoded
+            "dprag_greedy_text": greedy_text,    # DPRAG aggregated argmax per step, decoded
         })
         print(f"[{i+1:3}/{N_QUERIES}] k={len(docs):2} tok={n_out:3} "
               f"consist(sampled)={cr_out:.2f} consist(greedy)={cr_grd:.2f} "
