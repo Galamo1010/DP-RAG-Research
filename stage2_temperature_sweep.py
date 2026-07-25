@@ -45,7 +45,13 @@ from prefilter_engine import run_dual_instance, make_generation_config
 from prefilter_strategies import strategy_a, make_strategy_b
 import experiment_params as P
 
-TEMPERATURES = [0.1, 0.3, 0.5, 0.7]
+# The proposal (2.1 step limit) sweeps {0.1, 0.3, 0.5, 0.7}; we add 1.0 (Stage 1's
+# baseline temperature) so the recommended value is measured, not extrapolated.
+# All temperatures MUST run in this single job: retrieval happens once up front and
+# the same document sets are reused across every temperature, so the rows are
+# perfectly comparable. pup_retrieve is not seeded, so a separate fill-in run for
+# 1.0 alone would draw different documents -- hence the full re-run.
+TEMPERATURES = [0.1, 0.3, 0.5, 0.7, 1.0]
 N_DOCS = 10000
 N_QUERIES = 50
 MAX_RETRIEVE = 10
