@@ -15,27 +15,27 @@ from dprag.dp_model import DPGenerationConfig
 from dprag.chatdoctor import load_corpus, load_queries
 from dprag.dual_instance import run_dual_instance, make_generation_config
 from dprag.strategies import strategy_a, make_strategy_b
-from dprag import config as P
+from dprag.config import ExperimentConfig
 
-N_DOCS = 500          # small: embedding a huge corpus is not what we're testing
-MAX_RETRIEVE = 10
-GEN_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
-MAX_NEW_TOKENS = 32   # short: this is a wiring check
+# Small and short on purpose: this checks the wiring, not the measurement.
+EXPERIMENT = ExperimentConfig(n_docs=500, n_queries=2, max_new_tokens=32)
 
 
 def main():
-    print(f"=== prefilter_engine smoke | model={GEN_MODEL} ===")
+    exp = EXPERIMENT
+    print(f"=== dual-instance engine smoke | model={exp.gen_model} ===")
     engine = DPRAGEngine(
         pup_vector_store_config=PUPVectorStoreConfig(
-            model_id=P.EMBED_MODEL, top_p=P.RETRIEVAL_TOP_P, epsilon=P.EPS_RETRIEVAL,
-            max_retrieve=MAX_RETRIEVE, batch_size=P.EMBED_BATCH_SIZE,
+            model_id=exp.embed_model, top_p=exp.retrieval_top_p,
+            epsilon=exp.eps_retrieval, max_retrieve=exp.max_retrieve,
+            batch_size=exp.embed_batch_size,
         ),
-        model_id=GEN_MODEL,
-        dp_generation_config=DPGenerationConfig(epsilon=10.0),  # unused here; DPRAGEngine needs one
+        model_id=exp.gen_model,
+        dp_generation_config=DPGenerationConfig(epsilon=exp.gen_epsilon),  # unused here; DPRAGEngine needs one
     )
 
-    print(f"Embedding {N_DOCS} corpus docs ...")
-    for doc in load_corpus(limit=N_DOCS, sample_seed=7):
+    print(f"Embedding {exp.n_docs} corpus docs ...")
+    for doc in load_corpus(limit=exp.n_docs, sample_seed=exp.corpus_seed):
         engine.add(doc)
     engine.pup_vector_store.embeddings()
 
@@ -44,9 +44,9 @@ def main():
         "B_k10_t0.7": make_strategy_b(10, 0.7),
         "B_k20_t0.9": make_strategy_b(20, 0.9),
     }
-    cfg = make_generation_config(temperature=P.TEMPERATURE, max_new_tokens=MAX_NEW_TOKENS)
+    cfg = make_generation_config(temperature=exp.temperature, max_new_tokens=exp.max_new_tokens)
 
-    for q in load_queries(n=2, seed=P.QUERY_SEED):
+    for q in load_queries(n=exp.n_queries, seed=exp.query_seed):
         docs = engine.pup_retrieve(q.query)
         res = run_dual_instance(engine.dp_model, docs, q.query, cfg, strategies)
         print(f"\nQ: {q.query[:80].replace(chr(10),' ')}")

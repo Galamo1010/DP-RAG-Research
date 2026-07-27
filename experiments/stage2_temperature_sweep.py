@@ -32,8 +32,6 @@ Two things this sweep will likely show, both honest findings to report:
 Requires a CUDA GPU. Run:  uv run python stage2_temperature_sweep.py
 """
 
-import json
-import os
 import statistics as st
 import time
 
@@ -43,7 +41,8 @@ from dprag.dp_model import DPGenerationConfig
 from dprag.chatdoctor import load_corpus, load_queries
 from dprag.dual_instance import run_dual_instance, make_generation_config
 from dprag.strategies import strategy_a, make_strategy_b
-from dprag import config as P
+from dprag.config import ExperimentConfig
+from dprag import run_record
 
 # The proposal (2.1 step limit) sweeps {0.1, 0.3, 0.5, 0.7}; we add 1.0 (Stage 1's
 # baseline temperature) so the recommended value is measured, not extrapolated.
@@ -52,12 +51,9 @@ from dprag import config as P
 # perfectly comparable. pup_retrieve is not seeded, so a separate fill-in run for
 # 1.0 alone would draw different documents -- hence the full re-run.
 TEMPERATURES = [0.1, 0.3, 0.5, 0.7, 1.0]
-N_DOCS = 10000
-N_QUERIES = 50
-MAX_RETRIEVE = 10
-CORPUS_SEED = 7
-GEN_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
-MAX_NEW_TOKENS = P.MAX_NEW_TOKENS
+
+# 50 queries, not the default 200: this run only selects a hyper-parameter.
+EXPERIMENT = ExperimentConfig(n_queries=50)
 
 STRATEGIES = {
     "A": strategy_a,
@@ -94,38 +90,40 @@ def rouge_l_f1(hypothesis: str, reference: str) -> float:
 
 
 def main():
-    print(f"=== Stage 2.3 temperature sweep | model={GEN_MODEL} | "
-          f"{N_QUERIES} queries | T={TEMPERATURES} ===")
+    exp = EXPERIMENT
+    print(f"=== Stage 2.3 temperature sweep | model={exp.gen_model} | "
+          f"{exp.n_queries} queries | T={TEMPERATURES} ===")
     engine = DPRAGEngine(
         pup_vector_store_config=PUPVectorStoreConfig(
-            model_id=P.EMBED_MODEL, top_p=P.RETRIEVAL_TOP_P, epsilon=P.EPS_RETRIEVAL,
-            max_retrieve=MAX_RETRIEVE, batch_size=P.EMBED_BATCH_SIZE,
+            model_id=exp.embed_model, top_p=exp.retrieval_top_p,
+            epsilon=exp.eps_retrieval, max_retrieve=exp.max_retrieve,
+            batch_size=exp.embed_batch_size,
         ),
-        model_id=GEN_MODEL,
-        dp_generation_config=DPGenerationConfig(epsilon=10.0),  # unused; DPRAGEngine needs one
+        model_id=exp.gen_model,
+        dp_generation_config=DPGenerationConfig(epsilon=exp.gen_epsilon),  # unused; DPRAGEngine needs one
     )
 
-    print(f"Embedding {N_DOCS} corpus docs ...")
+    print(f"Embedding {exp.n_docs} corpus docs ...")
     t0 = time.time()
-    for doc in load_corpus(limit=N_DOCS, sample_seed=CORPUS_SEED):
+    for doc in load_corpus(limit=exp.n_docs, sample_seed=exp.corpus_seed):
         engine.add(doc)
     engine.pup_vector_store.embeddings()
     print(f"Embedded in {time.time() - t0:.1f}s")
 
     # Retrieve ONCE per query; the same document set is reused at every temperature.
-    queries = load_queries(n=N_QUERIES, seed=P.QUERY_SEED)
+    queries = load_queries(n=exp.n_queries, seed=exp.query_seed)
     fixed = []
     for q in queries:
         docs = engine.pup_retrieve(q.query)
         fixed.append({"query": q.query, "reference": q.reference, "docs": docs})
     n_zero = sum(1 for f in fixed if not f["docs"])
-    print(f"Retrieved once per query; {n_zero}/{N_QUERIES} queries got 0 documents "
+    print(f"Retrieved once per query; {n_zero}/{exp.n_queries} queries got 0 documents "
           f"(reported separately).\n")
 
     per_temperature = []
     per_query = []
     for temp in TEMPERATURES:
-        cfg = make_generation_config(temperature=temp, max_new_tokens=MAX_NEW_TOKENS)
+        cfg = make_generation_config(temperature=temp, max_new_tokens=exp.max_new_tokens)
         t_start = time.time()
         triggers = {name: [] for name in STRATEGIES}   # non-zero-doc only
         rouges = []                                     # all queries
@@ -145,7 +143,7 @@ def main():
         secs = time.time() - t_start
         row = {
             "temperature": temp,
-            "n_queries": N_QUERIES,
+            "n_queries": exp.n_queries,
             "n_zero_doc": n_zero,
             "mean_trigger": {name: (st.mean(v) if v else 0.0) for name, v in triggers.items()},
             "mean_rouge_l": st.mean(rouges),
@@ -168,19 +166,17 @@ def main():
     print("\nPick the temperature balancing quality (rougeL) against trigger rate; "
           "it becomes the fixed temperature for all strategy A/B runs.")
 
-    os.makedirs("results", exist_ok=True)
-    out = f"results/stage2_temperature_sweep_{N_QUERIES}q.json"
-    with open(out, "w", encoding="utf-8") as f:
-        json.dump({
-            "config": {
-                "model": GEN_MODEL, "n_docs": N_DOCS, "n_queries": N_QUERIES,
-                "max_retrieve": MAX_RETRIEVE, "max_new_tokens": MAX_NEW_TOKENS,
-                "temperatures": TEMPERATURES, "n_zero_doc": n_zero,
-                "quality_metric": "rouge_l_f1 (lightweight proxy; full BERTScore in Stage 5)",
-            },
+    out = run_record.write(
+        "stage2_temperature_sweep", exp,
+        metrics={
+            "temperatures": TEMPERATURES,
+            "n_zero_doc": n_zero,
+            "quality_metric": "rouge_l_f1 (lightweight proxy; full BERTScore in Stage 5)",
             "per_temperature": per_temperature,
-            "per_query": per_query,
-        }, f, ensure_ascii=False, indent=2)
+        },
+        per_item=per_query,
+        filename=f"stage2_temperature_sweep_{exp.n_queries}q",
+    )
     print(f"\nSaved -> {out}")
 
 

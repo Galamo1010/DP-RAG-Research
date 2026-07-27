@@ -12,19 +12,12 @@ Query set and corpus come from different sources, so non-overlap is guaranteed.
 """
 
 import json
-import os
 import random
 from dataclasses import dataclass
 
-# ChatDoctor-main sits next to the repo root; this file is one level inside it
-# (dp-rag/dprag/chatdoctor.py), hence two levels up.
-# Step 2 of the restructure replaces this with dprag.paths as the single owner
-# of layout knowledge.
-_DATA_DIR = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "ChatDoctor-main")
-)
-HEALTHCAREMAGIC_PATH = os.path.join(_DATA_DIR, "HealthCareMagic-100k.json")
-ICLINIQ_PATH = os.path.join(_DATA_DIR, "iCliniq-10k.json")
+# dprag.paths is the single owner of layout knowledge; ask it rather than
+# computing a relative path here (that broke once already when this file moved).
+from .paths import HEALTHCAREMAGIC_PATH, ICLINIQ_PATH, require_data
 
 
 @dataclass
@@ -42,6 +35,7 @@ def load_corpus(limit: int | None = None, sample_seed: int | None = None) -> lis
     instead of taking the first `limit`. Random sampling gives much better topic
     coverage of the corpus for a given size.
     """
+    require_data()
     with open(HEALTHCAREMAGIC_PATH, encoding="utf-8") as f:
         data = json.load(f)
     docs = [row["output"].strip() for row in data if row.get("output", "").strip()]
@@ -60,6 +54,7 @@ def load_queries(n: int = 200, seed: int = 42) -> list[Query]:
 
     Keeps the real doctor answer (answer_icliniq) as the evaluation reference.
     """
+    require_data()
     with open(ICLINIQ_PATH, encoding="utf-8") as f:
         data = json.load(f)
     rows = [

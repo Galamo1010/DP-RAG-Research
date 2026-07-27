@@ -19,8 +19,6 @@ DPLogitsAggregator, so the DP generation itself is byte-for-byte the baseline.
 Requires a CUDA GPU. Run:  uv run python stage1_consistency.py
 """
 
-import json
-import os
 import statistics as st
 import time
 
@@ -31,14 +29,11 @@ from dprag.dp_rag_engine import DPRAGEngine
 from dprag.pup_vector_store import PUPVectorStoreConfig
 from dprag.dp_model import DPGenerationConfig
 from dprag.chatdoctor import load_corpus, load_queries
-from dprag import config as P
+from dprag.config import ExperimentConfig
+from dprag import run_record
 
-N_DOCS = 10000
-N_QUERIES = 200          # proposal requires >= 200 for a stable consistency rate
-MAX_RETRIEVE = 10
-CORPUS_SEED = 7
-GEN_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
-GEN_EPSILON = 10.0
+# Defaults come from ExperimentConfig; this run keeps all of them.
+EXPERIMENT = ExperimentConfig()
 
 
 class _NoRagRecorder(LogitsProcessor):
@@ -117,23 +112,25 @@ def _consistency(a: list[int], b: list[int]) -> tuple[int, int]:
 
 
 def main():
-    print(f"=== Stage 1.2 consistency | model={GEN_MODEL} | {N_QUERIES} queries ===")
-    corpus = load_corpus(limit=N_DOCS, sample_seed=CORPUS_SEED)
-    queries = load_queries(n=N_QUERIES, seed=P.QUERY_SEED)
+    exp = EXPERIMENT
+    print(f"=== Stage 1.2 consistency | model={exp.gen_model} | {exp.n_queries} queries ===")
+    corpus = load_corpus(limit=exp.n_docs, sample_seed=exp.corpus_seed)
+    queries = load_queries(n=exp.n_queries, seed=exp.query_seed)
 
     cfg = DPGenerationConfig(
-        temperature=P.TEMPERATURE, max_new_tokens=P.MAX_NEW_TOKENS,
-        alpha=P.ALPHA, omega=P.OMEGA, epsilon=GEN_EPSILON, delta=P.DELTA,
+        temperature=exp.temperature, max_new_tokens=exp.max_new_tokens,
+        alpha=exp.alpha, omega=exp.omega, epsilon=exp.gen_epsilon, delta=exp.delta,
     )
     engine = DPRAGEngine(
         pup_vector_store_config=PUPVectorStoreConfig(
-            model_id=P.EMBED_MODEL, top_p=P.RETRIEVAL_TOP_P, epsilon=P.EPS_RETRIEVAL,
-            max_retrieve=MAX_RETRIEVE, batch_size=P.EMBED_BATCH_SIZE,
+            model_id=exp.embed_model, top_p=exp.retrieval_top_p,
+            epsilon=exp.eps_retrieval, max_retrieve=exp.max_retrieve,
+            batch_size=exp.embed_batch_size,
         ),
-        model_id=GEN_MODEL, dp_generation_config=cfg,
+        model_id=exp.gen_model, dp_generation_config=cfg,
     )
 
-    print(f"Embedding {N_DOCS} corpus docs ...")
+    print(f"Embedding {exp.n_docs} corpus docs ...")
     t0 = time.time()
     for doc in corpus:
         engine.add(doc)
@@ -167,7 +164,7 @@ def main():
             "norag_argmax_text": norag_text,     # NoRAG top token per step, decoded
             "dprag_greedy_text": greedy_text,    # DPRAG aggregated argmax per step, decoded
         })
-        print(f"[{i+1:3}/{N_QUERIES}] k={len(docs):2} tok={n_out:3} "
+        print(f"[{i+1:3}/{exp.n_queries}] k={len(docs):2} tok={n_out:3} "
               f"consist(sampled)={cr_out:.2f} consist(greedy)={cr_grd:.2f} "
               f"{time.time()-t:4.1f}s")
 
@@ -187,18 +184,10 @@ def main():
     print(f"  greedy  : mean={summary['mean_consistency_greedy']:.3f}  "
           f"median={summary['median_consistency_greedy']:.3f}")
 
-    os.makedirs("results", exist_ok=True)
-    out = f"results/stage1_consistency_{N_DOCS}x{N_QUERIES}.json"
-    with open(out, "w", encoding="utf-8") as f:
-        json.dump({
-            "config": {
-                "model": GEN_MODEL, "n_docs": N_DOCS, "n_queries": N_QUERIES,
-                "max_retrieve": MAX_RETRIEVE, "temperature": P.TEMPERATURE,
-                "max_new_tokens": P.MAX_NEW_TOKENS, "gen_epsilon": GEN_EPSILON,
-            },
-            "summary": summary,
-            "per_query": per_query,
-        }, f, ensure_ascii=False, indent=2)
+    out = run_record.write(
+        "stage1_consistency", exp, metrics=summary, per_item=per_query,
+        filename=f"stage1_consistency_{exp.n_docs}x{exp.n_queries}",
+    )
     print(f"\nSaved -> {out}")
 
 

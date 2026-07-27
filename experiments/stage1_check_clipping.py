@@ -11,25 +11,25 @@ token_epsilon itself is found by binary search inside DPGenerationConfig; here w
 just check that the code's clipping value and the PLD composition are self-consistent
 with the formulas, for the generation budgets used in the experiments.
 
-Run:  uv run python check_clipping.py
+Run:  uv run python experiments/stage1_check_clipping.py
 """
 
 from dprag.dp_model import DPGenerationConfig, DPLogitsAggregator
-from dprag import config as P
+from dprag.config import ExperimentConfig
 
 # Generation-side budgets to check. GEN_EPSILON=10 is what the smoke test uses;
 # the wider grid mirrors the proposal's ε_total control variable.
 GEN_EPSILON_GRID = [5.0, 10.0, 20.0, 40.0]
 
 
-def check_one(gen_epsilon: float) -> dict:
+def check_one(gen_epsilon: float, exp: ExperimentConfig) -> dict:
     cfg = DPGenerationConfig(
-        temperature=P.TEMPERATURE,
-        max_new_tokens=P.MAX_NEW_TOKENS,
-        alpha=P.ALPHA,
-        omega=P.OMEGA,
+        temperature=exp.temperature,
+        max_new_tokens=exp.max_new_tokens,
+        alpha=exp.alpha,
+        omega=exp.omega,
         epsilon=gen_epsilon,
-        delta=P.DELTA,
+        delta=exp.delta,
     )
     token_eps = cfg.token_epsilon()
 
@@ -57,13 +57,15 @@ def check_one(gen_epsilon: float) -> dict:
 
 
 def main():
-    print(f"temperature={P.TEMPERATURE}  max_new_tokens={P.MAX_NEW_TOKENS}  delta={P.DELTA}\n")
+    exp = ExperimentConfig()
+    print(f"temperature={exp.temperature}  max_new_tokens={exp.max_new_tokens}  "
+          f"delta={exp.delta}\n")
     header = f"{'eps_gen':>7} | {'token_e':>9} | {'clip=te/2':>10} | {'clip(agg)':>10} | {'PLD_T':>8} | ok?"
     print(header)
     print("-" * len(header))
     all_ok = True
     for e in GEN_EPSILON_GRID:
-        r = check_one(e)
+        r = check_one(e, exp)
         ok = r["clip_match"] and r["budget_match"]
         all_ok &= ok
         print(f"{r['gen_epsilon']:7.1f} | {r['token_epsilon']:9.5f} | "
