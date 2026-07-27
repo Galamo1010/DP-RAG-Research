@@ -6,7 +6,7 @@ Run:  uv run pytest test_prefilter_strategies.py -v
 import pytest
 import torch
 
-from prefilter_strategies import (
+from dprag.strategies import (
     PrefilterDecision,
     jaccard_topk,
     make_strategy_b,

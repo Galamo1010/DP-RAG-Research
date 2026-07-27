@@ -45,7 +45,7 @@ from dataclasses import dataclass, field
 import torch
 from transformers import GenerationConfig, LogitsProcessor, LogitsProcessorList
 
-from prefilter_strategies import PrefilterDecision, Strategy
+from .strategies import PrefilterDecision, Strategy
 
 NORAG_ROW = 0
 RAG_ROW = 1

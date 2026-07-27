@@ -9,13 +9,13 @@ This is a wiring check, NOT a measurement run (that's stage2_temperature_sweep).
 Run:  uv run python smoke_prefilter_engine.py
 """
 
-from dp_rag_engine import DPRAGEngine
-from pup_vector_store import PUPVectorStoreConfig
-from dp_model import DPGenerationConfig
-from chatdoctor_data import load_corpus, load_queries
-from prefilter_engine import run_dual_instance, make_generation_config
-from prefilter_strategies import strategy_a, make_strategy_b
-import experiment_params as P
+from dprag.dp_rag_engine import DPRAGEngine
+from dprag.pup_vector_store import PUPVectorStoreConfig
+from dprag.dp_model import DPGenerationConfig
+from dprag.chatdoctor import load_corpus, load_queries
+from dprag.dual_instance import run_dual_instance, make_generation_config
+from dprag.strategies import strategy_a, make_strategy_b
+from dprag import config as P
 
 N_DOCS = 500          # small: embedding a huge corpus is not what we're testing
 MAX_RETRIEVE = 10

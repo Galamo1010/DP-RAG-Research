@@ -18,7 +18,8 @@ from transformers.modeling_outputs import BaseModelOutput
 # DP accounting
 from dp_accounting.pld.privacy_loss_distribution import from_privacy_parameters, identity
 from dp_accounting.pld.common import DifferentialPrivacyParameters
-from test_data import print_items, simple_medical_messages, hair_color_messages, hair_color_documents, medical_dirichlet_documents
+# NOTE: synthetic-data helpers are imported inside main() below -- they pull in
+# faker + datasets (~4.6s) and only the demo needs them.
 
 class PUPVectorStoreConfig:
     def __init__(self, model_id: str = "Snowflake/snowflake-arctic-embed-m-v1.5", top_k: int | None = None, top_p: float | None = None, top_p_alpha: float = 5.0, min_score: float = -0.5, max_score: float = 0.8,  epsilon: float = 0.1, max_retrieve: int = 128, differential_pivacy: bool = True, batch_size: int = 32):
@@ -193,7 +194,8 @@ Possible choices are:
 
 
 def main():
-    docs = medical_dirichlet_documents()    
+    from .synthetic import medical_dirichlet_documents, print_items
+    docs = medical_dirichlet_documents()
     vector_store = PUPVectorStore(config = PUPVectorStoreConfig(
         # top_k = 80,
         top_p = 0.02,

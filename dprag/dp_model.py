@@ -19,7 +19,10 @@ from transformers import (
     LogitsProcessor,
     LogitsProcessorList,
 )
-from test_data import print_items, simple_medical_messages, hair_color_messages, hair_color_documents, medical_dirichlet_documents
+# NOTE: synthetic-data helpers are imported inside the demo functions below, not
+# here. They pull in faker + datasets (~4.6s), and the engine itself never uses
+# them -- only the demos do. Keeping the import local means `import dprag` stays
+# cheap for the experiment scripts.
 from dp_accounting.pld.privacy_loss_distribution import from_privacy_parameters, identity
 from dp_accounting.pld.common import DifferentialPrivacyParameters
 
@@ -247,6 +250,7 @@ class DPModel:
 
 
 def chat_test():
+    from .synthetic import hair_color_documents, print_items
     dp_model = DPModel("microsoft/Phi-3.5-mini-instruct")
     documents = hair_color_documents(n=100)
     question = "What is the subject's hair color?"
@@ -282,6 +286,7 @@ def chat_test():
 
 
 def summary_test():
+    from .synthetic import medical_dirichlet_documents, print_items
     dp_model = DPModel("microsoft/Phi-3.5-mini-instruct")
     # dp_model = DPModel("meta-llama/Llama-3.2-3B-Instruct")
     # dp_model = DPModel("mistralai/Mistral-7B-Instruct-v0.3")
@@ -302,6 +307,7 @@ def summary_test():
 
 
 def chat_medical_test():
+    from .synthetic import medical_dirichlet_documents, print_items
     dp_model = DPModel("microsoft/Phi-3.5-mini-instruct")
     # dp_model = DPModel("meta-llama/Llama-3.2-3B-Instruct")
     # dp_model = DPModel("mistralai/Mistral-7B-Instruct-v0.3")

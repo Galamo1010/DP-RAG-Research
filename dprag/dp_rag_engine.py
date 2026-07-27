@@ -1,7 +1,8 @@
 from termcolor import colored, cprint
-from pup_vector_store import PUPVectorStore, PUPVectorStoreConfig
-from dp_model import DPModel, DPGenerationConfig
-from test_data import print_items, medical_dirichlet_documents
+from .pup_vector_store import PUPVectorStore, PUPVectorStoreConfig
+from .dp_model import DPModel, DPGenerationConfig
+# NOTE: synthetic-data helpers are imported inside main() below -- they pull in
+# faker + datasets (~4.6s) and only the demo needs them.
 
 class DPRAGEngine:
     def __init__(
@@ -35,6 +36,7 @@ class DPRAGEngine:
 
 
 def main():
+    from .synthetic import medical_dirichlet_documents
     # Use data from Huggingface
     docs = medical_dirichlet_documents()
     # Setup the DP RAG Engine

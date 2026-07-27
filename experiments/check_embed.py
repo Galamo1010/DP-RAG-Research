@@ -15,8 +15,8 @@ import time
 import torch
 from termcolor import cprint
 
-from pup_vector_store import PUPVectorStore, PUPVectorStoreConfig
-from test_data import hair_color_documents
+from dprag.pup_vector_store import PUPVectorStore, PUPVectorStoreConfig
+from dprag.synthetic import hair_color_documents
 
 
 def _peak_memory_mb() -> float | None:

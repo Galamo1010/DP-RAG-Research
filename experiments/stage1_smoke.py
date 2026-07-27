@@ -16,11 +16,11 @@ import json
 import os
 import time
 
-from dp_rag_engine import DPRAGEngine
-from pup_vector_store import PUPVectorStoreConfig
-from dp_model import DPGenerationConfig
-from chatdoctor_data import load_corpus, load_queries
-import experiment_params as P
+from dprag.dp_rag_engine import DPRAGEngine
+from dprag.pup_vector_store import PUPVectorStoreConfig
+from dprag.dp_model import DPGenerationConfig
+from dprag.chatdoctor import load_corpus, load_queries
+from dprag import config as P
 
 N_DOCS = 10000
 N_QUERIES = 20

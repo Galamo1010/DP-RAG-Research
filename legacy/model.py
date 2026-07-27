@@ -13,7 +13,7 @@ from transformers import (
     # Phi3ForCausalLM,
     GenerationConfig,
 )
-from test_data import simple_medical_messages, hair_color_messages
+from dprag.synthetic import simple_medical_messages, hair_color_messages
 from termcolor import cprint
 
 # https://huggingface.co/docs/transformers/llm_tutorial#wrong-padding-side

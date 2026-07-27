@@ -2,10 +2,10 @@ import os
 from collections import Counter
 import json
 from termcolor import colored, cprint
-from pup_vector_store import PUPVectorStore, PUPVectorStoreConfig
-from dp_model import DPModel, DPGenerationConfig
-from test_data import print_items, medical_dirichlet_documents, medical_dirichlet_full
-from dp_rag_engine import DPRAGEngine, DPGenerationConfig, PUPVectorStore, PUPVectorStoreConfig
+from dprag.pup_vector_store import PUPVectorStore, PUPVectorStoreConfig
+from dprag.dp_model import DPModel, DPGenerationConfig
+from dprag.synthetic import print_items, medical_dirichlet_documents, medical_dirichlet_full
+from dprag.dp_rag_engine import DPRAGEngine, DPGenerationConfig, PUPVectorStore, PUPVectorStoreConfig
 
 class Evaluator:
     def __init__(self):

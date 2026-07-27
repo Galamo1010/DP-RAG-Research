@@ -16,9 +16,12 @@ import os
 import random
 from dataclasses import dataclass
 
-# ChatDoctor-main sits next to the dp-rag folder.
+# ChatDoctor-main sits next to the repo root; this file is one level inside it
+# (dp-rag/dprag/chatdoctor.py), hence two levels up.
+# Step 2 of the restructure replaces this with dprag.paths as the single owner
+# of layout knowledge.
 _DATA_DIR = os.path.normpath(
-    os.path.join(os.path.dirname(__file__), "..", "ChatDoctor-main")
+    os.path.join(os.path.dirname(__file__), "..", "..", "ChatDoctor-main")
 )
 HEALTHCAREMAGIC_PATH = os.path.join(_DATA_DIR, "HealthCareMagic-100k.json")
 ICLINIQ_PATH = os.path.join(_DATA_DIR, "iCliniq-10k.json")

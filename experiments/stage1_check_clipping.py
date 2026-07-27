@@ -14,8 +14,8 @@ with the formulas, for the generation budgets used in the experiments.
 Run:  uv run python check_clipping.py
 """
 
-from dp_model import DPGenerationConfig, DPLogitsAggregator
-import experiment_params as P
+from dprag.dp_model import DPGenerationConfig, DPLogitsAggregator
+from dprag import config as P
 
 # Generation-side budgets to check. GEN_EPSILON=10 is what the smoke test uses;
 # the wider grid mirrors the proposal's ε_total control variable.
