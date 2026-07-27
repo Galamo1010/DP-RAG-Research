@@ -29,16 +29,13 @@ Two things this sweep will likely show, both honest findings to report:
     NoRAG trajectory's quality, a proxy for selection; the routed system's
     quality is measured in Stage 3.
 
-Requires a CUDA GPU. Run:  uv run python stage2_temperature_sweep.py
+Requires a CUDA GPU. Run:  uv run python experiments/stage2_temperature_sweep.py
 """
 
 import statistics as st
 import time
 
-from dprag.dp_rag_engine import DPRAGEngine
-from dprag.pup_vector_store import PUPVectorStoreConfig
-from dprag.dp_model import DPGenerationConfig
-from dprag.chatdoctor import load_corpus, load_queries
+from dprag.bench import Bench
 from dprag.dual_instance import run_dual_instance, make_generation_config
 from dprag.strategies import strategy_a, make_strategy_b
 from dprag.config import ExperimentConfig
@@ -46,10 +43,10 @@ from dprag import run_record
 
 # The proposal (2.1 step limit) sweeps {0.1, 0.3, 0.5, 0.7}; we add 1.0 (Stage 1's
 # baseline temperature) so the recommended value is measured, not extrapolated.
-# All temperatures MUST run in this single job: retrieval happens once up front and
-# the same document sets are reused across every temperature, so the rows are
-# perfectly comparable. pup_retrieve is not seeded, so a separate fill-in run for
-# 1.0 alone would draw different documents -- hence the full re-run.
+# Retrieval happens once up front and the same document sets are reused at every
+# temperature, so the rows are comparable within a run. Retrieval is seeded via
+# cfg.seed, so a single temperature CAN now be re-run on its own and still see the
+# same documents -- that was not true when this sweep was first written.
 TEMPERATURES = [0.1, 0.3, 0.5, 0.7, 1.0]
 
 # 50 queries, not the default 200: this run only selects a hyper-parameter.
@@ -93,28 +90,13 @@ def main():
     exp = EXPERIMENT
     print(f"=== Stage 2.3 temperature sweep | model={exp.gen_model} | "
           f"{exp.n_queries} queries | T={TEMPERATURES} ===")
-    engine = DPRAGEngine(
-        pup_vector_store_config=PUPVectorStoreConfig(
-            model_id=exp.embed_model, top_p=exp.retrieval_top_p,
-            epsilon=exp.eps_retrieval, max_retrieve=exp.max_retrieve,
-            batch_size=exp.embed_batch_size,
-        ),
-        model_id=exp.gen_model,
-        dp_generation_config=DPGenerationConfig(epsilon=exp.gen_epsilon),  # unused; DPRAGEngine needs one
-    )
-
-    print(f"Embedding {exp.n_docs} corpus docs ...")
-    t0 = time.time()
-    for doc in load_corpus(limit=exp.n_docs, sample_seed=exp.corpus_seed):
-        engine.add(doc)
-    engine.pup_vector_store.embeddings()
-    print(f"Embedded in {time.time() - t0:.1f}s")
+    bench = Bench.build(exp)
 
     # Retrieve ONCE per query; the same document set is reused at every temperature.
-    queries = load_queries(n=exp.n_queries, seed=exp.query_seed)
+    queries = bench.queries()
     fixed = []
     for q in queries:
-        docs = engine.pup_retrieve(q.query)
+        docs = bench.retrieve(q.query)
         fixed.append({"query": q.query, "reference": q.reference, "docs": docs})
     n_zero = sum(1 for f in fixed if not f["docs"])
     print(f"Retrieved once per query; {n_zero}/{exp.n_queries} queries got 0 documents "
@@ -128,7 +110,7 @@ def main():
         triggers = {name: [] for name in STRATEGIES}   # non-zero-doc only
         rouges = []                                     # all queries
         for f in fixed:
-            res = run_dual_instance(engine.dp_model, f["docs"], f["query"], cfg, STRATEGIES)
+            res = run_dual_instance(bench.dp_model, f["docs"], f["query"], cfg, STRATEGIES)
             rl = rouge_l_f1(res.text, f["reference"])
             rouges.append(rl)
             has_docs = res.n_documents > 0

@@ -25,12 +25,9 @@ import time
 import torch
 from transformers import LogitsProcessor, LogitsProcessorList
 
-from dprag.dp_rag_engine import DPRAGEngine
-from dprag.pup_vector_store import PUPVectorStoreConfig
-from dprag.dp_model import DPGenerationConfig
-from dprag.chatdoctor import load_corpus, load_queries
+from dprag.bench import Bench
 from dprag.config import ExperimentConfig
-from dprag import run_record
+from dprag import prompts, run_record
 
 # Defaults come from ExperimentConfig; this run keeps all of them.
 EXPERIMENT = ExperimentConfig()
@@ -60,25 +57,13 @@ class _GreedyRecorder(LogitsProcessor):
         return scores
 
 
-def _build_messages(docs: list[str], question: str) -> list[list[dict]]:
-    # Identical to DPModel.dp_chat so the measured baseline is faithful.
-    return [
-        [
-            {'role': 'system', 'content': 'You give a short response based on a predefined set documents.'},
-            {'role': 'user', 'content': f'{question}'},
-        ]
-    ] + [
-        [
-            {'role': 'system', 'content': f'You give a short responses based on this document or a predefined set of similar documents.\nDocument:\n"{doc}"'},
-            {'role': 'user', 'content': f'{question}'},
-        ]
-        for doc in docs
-    ]
-
-
 def _generate_with_recording(dp_model, docs, question, cfg):
-    """Replicates DPModel.dp_chat but with recorders + returns emitted token ids."""
-    messages = _build_messages(docs, question)
+    """Replicates DPModel.dp_chat but with recorders + returns emitted token ids.
+
+    The prompt comes from dprag.prompts, the same builder DPModel.dp_chat uses, so
+    "the measured baseline" cannot drift from the baseline it is measuring.
+    """
+    messages = prompts.dprag_chat_batch(docs, question)
     model_inputs = dp_model.tokenizer.apply_chat_template(
         messages, tokenize=True, padding=True, return_tensors='pt',
         return_dict=True, add_generation_prompt=True, continue_final_message=False,
@@ -114,35 +99,16 @@ def _consistency(a: list[int], b: list[int]) -> tuple[int, int]:
 def main():
     exp = EXPERIMENT
     print(f"=== Stage 1.2 consistency | model={exp.gen_model} | {exp.n_queries} queries ===")
-    corpus = load_corpus(limit=exp.n_docs, sample_seed=exp.corpus_seed)
-    queries = load_queries(n=exp.n_queries, seed=exp.query_seed)
-
-    cfg = DPGenerationConfig(
-        temperature=exp.temperature, max_new_tokens=exp.max_new_tokens,
-        alpha=exp.alpha, omega=exp.omega, epsilon=exp.gen_epsilon, delta=exp.delta,
-    )
-    engine = DPRAGEngine(
-        pup_vector_store_config=PUPVectorStoreConfig(
-            model_id=exp.embed_model, top_p=exp.retrieval_top_p,
-            epsilon=exp.eps_retrieval, max_retrieve=exp.max_retrieve,
-            batch_size=exp.embed_batch_size,
-        ),
-        model_id=exp.gen_model, dp_generation_config=cfg,
-    )
-
-    print(f"Embedding {exp.n_docs} corpus docs ...")
-    t0 = time.time()
-    for doc in corpus:
-        engine.add(doc)
-    engine.pup_vector_store.embeddings()
-    print(f"Embedded in {time.time() - t0:.1f}s\n")
+    bench = Bench.build(exp)
+    queries = bench.queries()
+    cfg = bench.engine.dp_generation_config
 
     per_query = []
     for i, q in enumerate(queries):
         t = time.time()
-        docs = engine.pup_retrieve(q.query)
+        docs = bench.retrieve(q.query)
         emitted, norag, greedy, text = _generate_with_recording(
-            engine.dp_model, docs, q.query, cfg,
+            bench.dp_model, docs, q.query, cfg,
         )
         m_out, n_out = _consistency(norag, emitted)      # proposal-literal (sampled)
         m_grd, n_grd = _consistency(norag, greedy)       # deterministic reference
@@ -151,7 +117,7 @@ def main():
         # Decode the token streams so the rates are eyeball-checkable. Note the
         # NoRAG/greedy "text" is a per-step overlay on DPRAG's shared prefix
         # (teacher-forced), not an independent autoregressive generation.
-        tok = engine.dp_model.tokenizer
+        tok = bench.dp_model.tokenizer
         norag_text = tok.decode(norag, skip_special_tokens=True)
         greedy_text = tok.decode(greedy, skip_special_tokens=True)
         per_query.append({

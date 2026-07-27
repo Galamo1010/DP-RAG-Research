@@ -22,12 +22,15 @@ from dp_accounting.pld.common import DifferentialPrivacyParameters
 # faker + datasets (~4.6s) and only the demo needs them.
 
 class PUPVectorStoreConfig:
-    def __init__(self, model_id: str = "Snowflake/snowflake-arctic-embed-m-v1.5", top_k: int | None = None, top_p: float | None = None, top_p_alpha: float = 5.0, min_score: float = -0.5, max_score: float = 0.8,  epsilon: float = 0.1, max_retrieve: int = 128, differential_pivacy: bool = True, batch_size: int = 32):
+    def __init__(self, model_id: str = "Snowflake/snowflake-arctic-embed-m-v1.5", top_k: int | None = None, top_p: float | None = None, top_p_alpha: float = 5.0, min_score: float = -0.5, max_score: float = 0.8,  epsilon: float = 0.1, max_retrieve: int = 128, differential_pivacy: bool = True, batch_size: int = 32, seed: int | None = None):
         """
         alpha: the concentration of scores around top scores
         pi: the cumulated share of weight to select
         max_score: a level above wich the weight saturates
         batch_size: how many documents to embed per forward pass (caps peak memory)
+        seed: makes retrieval reproducible. None keeps the original global-RNG
+            behaviour. See PUPVectorStore for why this does not affect the DP
+            guarantee.
         """
         self.model_id = model_id
         self.top_k = top_k
@@ -39,6 +42,7 @@ class PUPVectorStoreConfig:
         self.max_retrieve = max_retrieve
         self.differential_pivacy = differential_pivacy
         self.batch_size = batch_size
+        self.seed = seed
 
 class PUPVectorStore:
     def __init__(self, config: PUPVectorStoreConfig):
@@ -48,6 +52,16 @@ Possible choices are:
 - sentence-transformers/multi-qa-MiniLM-L6-dot-v1
 - sentence-transformers/all-MiniLM-L12-v1
 - sentence-transformers/all-mpnet-base-v2
+
+Retrieval draws twice from a random source: the exponential-mechanism threshold
+and the truncation to max_retrieve. With `config.seed` set, both draws come from
+a store-local generator, so a run can be reproduced or a single configuration
+re-run without redrawing everyone else's documents.
+
+That is a statement about experiments, not about privacy. The DP guarantee is a
+property of the mechanism's output distribution over its randomness; seeding
+does not change that distribution, but it does mean a seeded output must never
+be presented as a DP-protected release. See docs/adr/0002-seeded-retrieval.md.
         """
         self.model_id = self.model_id = config.model_id
         self.store = []
@@ -63,7 +77,12 @@ Possible choices are:
         self.privacy_loss_distribution = from_privacy_parameters(DifferentialPrivacyParameters(epsilon=self.epsilon))
         self.differential_pivacy = config.differential_pivacy
         self.batch_size = config.batch_size
-    
+        self.seed = config.seed
+        # Seeded: store-local generators. Unseeded: the global RNGs, preserving
+        # the original behaviour exactly.
+        self._np_rng = np.random.default_rng(config.seed) if config.seed is not None else np.random
+        self._py_rng = random.Random(config.seed) if config.seed is not None else random
+
     @cached_property
     def model(self) -> PreTrainedModel:
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -129,7 +148,7 @@ Possible choices are:
         delta_sorted_scores = np.diff(sorted_scores)
         score_threshold_pdf = np.exp(self.epsilon * sorted_utilities[:-1] / 2 ) * delta_sorted_scores # The PDF is weighted by the width of the interval
         score_threshold_pdf /= np.sum(score_threshold_pdf)
-        score_threshold = np.random.choice(sorted_scores[:-1], p=score_threshold_pdf)
+        score_threshold = self._np_rng.choice(sorted_scores[:-1], p=score_threshold_pdf)
         return score_threshold
     
     def _exp_mechanism_top_p_threshold(self, scores: np.ndarray) -> float:
@@ -145,7 +164,7 @@ Possible choices are:
         delta_sorted_scores = np.diff(sorted_scores)
         score_threshold_pdf = np.exp(self.epsilon * sorted_utilities[:-1] / 2 ) * delta_sorted_scores # The PDF is weighted by the width of the interval
         score_threshold_pdf /= np.sum(score_threshold_pdf)
-        score_threshold = np.random.choice(sorted_scores[:-1], p=score_threshold_pdf)
+        score_threshold = self._np_rng.choice(sorted_scores[:-1], p=score_threshold_pdf)
         return score_threshold
     
     def _non_dp_top_k_threshold(self, scores: np.ndarray) -> float:
@@ -190,7 +209,7 @@ Possible choices are:
         # Sort by decreasing score
         doc_score_pairs = sorted(doc_score_pairs, key=lambda x: x[1], reverse=True)
         retrieved = [doc for doc, score in doc_score_pairs if score > score_threshold]
-        return random.sample(retrieved, min(len(retrieved), self.max_retrieve))
+        return self._py_rng.sample(retrieved, min(len(retrieved), self.max_retrieve))
 
 
 def main():

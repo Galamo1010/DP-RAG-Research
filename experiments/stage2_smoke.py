@@ -9,10 +9,7 @@ This is a wiring check, NOT a measurement run (that's stage2_temperature_sweep).
 Run:  uv run python smoke_prefilter_engine.py
 """
 
-from dprag.dp_rag_engine import DPRAGEngine
-from dprag.pup_vector_store import PUPVectorStoreConfig
-from dprag.dp_model import DPGenerationConfig
-from dprag.chatdoctor import load_corpus, load_queries
+from dprag.bench import Bench
 from dprag.dual_instance import run_dual_instance, make_generation_config
 from dprag.strategies import strategy_a, make_strategy_b
 from dprag.config import ExperimentConfig
@@ -24,20 +21,7 @@ EXPERIMENT = ExperimentConfig(n_docs=500, n_queries=2, max_new_tokens=32)
 def main():
     exp = EXPERIMENT
     print(f"=== dual-instance engine smoke | model={exp.gen_model} ===")
-    engine = DPRAGEngine(
-        pup_vector_store_config=PUPVectorStoreConfig(
-            model_id=exp.embed_model, top_p=exp.retrieval_top_p,
-            epsilon=exp.eps_retrieval, max_retrieve=exp.max_retrieve,
-            batch_size=exp.embed_batch_size,
-        ),
-        model_id=exp.gen_model,
-        dp_generation_config=DPGenerationConfig(epsilon=exp.gen_epsilon),  # unused here; DPRAGEngine needs one
-    )
-
-    print(f"Embedding {exp.n_docs} corpus docs ...")
-    for doc in load_corpus(limit=exp.n_docs, sample_seed=exp.corpus_seed):
-        engine.add(doc)
-    engine.pup_vector_store.embeddings()
+    bench = Bench.build(exp)
 
     strategies = {
         "A": strategy_a,
@@ -46,9 +30,9 @@ def main():
     }
     cfg = make_generation_config(temperature=exp.temperature, max_new_tokens=exp.max_new_tokens)
 
-    for q in load_queries(n=exp.n_queries, seed=exp.query_seed):
-        docs = engine.pup_retrieve(q.query)
-        res = run_dual_instance(engine.dp_model, docs, q.query, cfg, strategies)
+    for q in bench.queries():
+        docs = bench.retrieve(q.query)
+        res = run_dual_instance(bench.dp_model, docs, q.query, cfg, strategies)
         print(f"\nQ: {q.query[:80].replace(chr(10),' ')}")
         print(f"   docs={res.n_documents}  steps={res.n_steps}")
         for name in strategies:

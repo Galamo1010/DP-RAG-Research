@@ -45,40 +45,11 @@ from dataclasses import dataclass, field
 import torch
 from transformers import GenerationConfig, LogitsProcessor, LogitsProcessorList
 
+from . import prompts
 from .strategies import PrefilterDecision, Strategy
 
 NORAG_ROW = 0
 RAG_ROW = 1
-
-# Byte-for-byte the system prompt dp_model.dp_chat gives its public-prior stream,
-# so Stage 2's NoRAG instance stays comparable with the Stage 1 baseline.
-_NORAG_SYSTEM = "You give a short response based on a predefined set documents."
-_RAG_SYSTEM_HEAD = (
-    "You give a short responses based on these documents or a predefined set of "
-    "similar documents."
-)
-
-
-def build_norag_messages(question: str) -> list[dict[str, str]]:
-    return [
-        {"role": "system", "content": _NORAG_SYSTEM},
-        {"role": "user", "content": f"{question}"},
-    ]
-
-
-def build_rag_messages(documents: list[str], question: str) -> list[dict[str, str]]:
-    """One instance holding every retrieved document (計畫書 3.1)."""
-    if not documents:
-        # DP retrieval can legitimately return nothing; with no documents the RAG
-        # instance has nothing to condition on and collapses onto NoRAG.
-        return build_norag_messages(question)
-    joined = "\n\n".join(
-        f'Document {i + 1}:\n"{doc}"' for i, doc in enumerate(documents)
-    )
-    return [
-        {"role": "system", "content": f"{_RAG_SYSTEM_HEAD}\n{joined}"},
-        {"role": "user", "content": f"{question}"},
-    ]
 
 
 class _DualInstanceRecorder(LogitsProcessor):
@@ -177,9 +148,7 @@ def run_dual_instance(
     driver_row = NORAG_ROW if driver == "norag" else RAG_ROW
 
     tokenizer = dp_model.tokenizer
-    messages = [None, None]
-    messages[NORAG_ROW] = build_norag_messages(question)
-    messages[RAG_ROW] = build_rag_messages(documents, question)
+    messages = prompts.dual_instance_batch(documents, question)
 
     model_inputs = tokenizer.apply_chat_template(
         messages,

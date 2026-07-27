@@ -14,10 +14,7 @@ Run:  ./.venv/Scripts/python.exe test_smoke_dprag.py
 
 import time
 
-from dprag.dp_rag_engine import DPRAGEngine
-from dprag.pup_vector_store import PUPVectorStoreConfig
-from dprag.dp_model import DPGenerationConfig
-from dprag.chatdoctor import load_corpus, load_queries
+from dprag.bench import Bench
 from dprag.config import ExperimentConfig
 from dprag import run_record
 
@@ -29,39 +26,10 @@ def main():
     exp = EXPERIMENT
     mode = "DP ON (two-layer)" if DP_ON else "DP OFF (non-private baseline)"
     print(f"=== {mode} | model={exp.gen_model} ===")
-    print(f"Loading {exp.n_docs} corpus docs (random sample) + {exp.n_queries} queries ...")
-    corpus = load_corpus(limit=exp.n_docs, sample_seed=exp.corpus_seed)
-    queries = load_queries(n=exp.n_queries, seed=exp.query_seed)
+    bench = Bench.build(exp, differential_privacy=DP_ON)
+    queries = bench.queries()
 
-    engine = DPRAGEngine(
-        pup_vector_store_config=PUPVectorStoreConfig(
-            model_id=exp.embed_model,
-            top_p=exp.retrieval_top_p,
-            epsilon=exp.eps_retrieval,
-            max_retrieve=exp.max_retrieve,
-            batch_size=exp.embed_batch_size,
-            differential_pivacy=DP_ON,
-        ),
-        model_id=exp.gen_model,
-        dp_generation_config=DPGenerationConfig(
-            temperature=exp.temperature,
-            max_new_tokens=exp.max_new_tokens,
-            alpha=exp.alpha,
-            omega=exp.omega,
-            epsilon=exp.gen_epsilon,
-            differential_pivacy=DP_ON,
-        ),
-    )
-
-    print("Building vector store (embedding, please wait) ...")
-    t0 = time.time()
-    for doc in corpus:
-        engine.add(doc)
-    # Force embedding now so the timing below is generation-only.
-    engine.pup_vector_store.embeddings()
-    print(f"Embedded {len(corpus)} docs in {time.time() - t0:.1f}s")
-
-    eps_total = engine.privacy_loss_distribution.get_epsilon_for_delta(exp.delta)
+    eps_total = bench.epsilon()
     if DP_ON:
         print(f"End-to-end epsilon (retrieval + generation, delta={exp.delta}): "
               f"{eps_total:.4f}\n")
@@ -71,8 +39,8 @@ def main():
     results = []
     for i, q in enumerate(queries):
         t = time.time()
-        retrieved = engine.pup_retrieve(q.query)
-        answer = engine.dp_chat(q.query)
+        retrieved = bench.retrieve(q.query)
+        answer = bench.engine.dp_chat(q.query)
         dt = time.time() - t
         print(f"[{i+1:2}/{exp.n_queries}] retrieved={len(retrieved):2}  {dt:5.1f}s")
         print(f"   Q: {q.query[:100].replace(chr(10),' ')}")

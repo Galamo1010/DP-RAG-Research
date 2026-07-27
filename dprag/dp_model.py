@@ -26,6 +26,8 @@ from transformers import (
 from dp_accounting.pld.privacy_loss_distribution import from_privacy_parameters, identity
 from dp_accounting.pld.common import DifferentialPrivacyParameters
 
+from . import prompts
+
 # https://huggingface.co/docs/transformers/llm_tutorial#wrong-padding-side
 
 DEBUG = False
@@ -203,18 +205,7 @@ class DPModel:
             user_message: str,
             dp_generation_config: DPGenerationConfig = DPGenerationConfig(),
         ) -> str:
-        messages = [
-            [
-                {'role': 'system', 'content': f'You give a short response based on a predefined set documents.'},
-                {'role': 'user', 'content': f'{user_message}'},
-            ]
-        ]+[
-            [
-                {'role': 'system', 'content': f'You give a short responses based on this document or a predefined set of similar documents.\nDocument:\n"{context_message}"'},
-                {'role': 'user', 'content': f'{user_message}'},
-            ]
-            for context_message in context_messages
-        ]
+        messages = prompts.dprag_chat_batch(context_messages, user_message)
         if DEBUG:
             print("Example of the first and another message:")
             cprint(messages[0], 'red')
@@ -228,18 +219,7 @@ class DPModel:
             topic: str,
             dp_generation_config: DPGenerationConfig = DPGenerationConfig(),
         ) -> str:
-        messages = [
-            [
-                {'role': 'system', 'content': f'You are a rephrasing writer.'},
-                {'role': 'user', 'content': f'Can you write a short text about the following topics:\n"{topic}"?'},
-            ]
-        ]+[
-            [
-                {'role': 'system', 'content': f'You are a rephrasing writer.'},
-                {'role': 'user', 'content': f'Can you rephrase this document:\n"{context_message}"?\nJust output the text.'},
-            ]
-            for context_message in context_messages
-        ]
+        messages = prompts.summary_batch(context_messages, topic)
         if DEBUG:
             print("Example of the first and another message:")
             cprint(messages[0], 'red')
