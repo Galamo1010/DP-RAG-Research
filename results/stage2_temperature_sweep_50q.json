@@ -1,0 +1,3104 @@
+{
+  "schema": 1,
+  "name": "stage2_temperature_sweep",
+  "created_at": "2026-07-30T05:55:32+00:00",
+  "git_commit": "a4af05c",
+  "git_dirty": true,
+  "params": {
+    "delta": 0.001,
+    "eps_retrieval": 0.2,
+    "gen_epsilon": 10.0,
+    "temperature": 1.0,
+    "max_new_tokens": 128,
+    "alpha": 1.0,
+    "omega": 0.01,
+    "gen_model": "meta-llama/Llama-3.1-8B-Instruct",
+    "embed_model": "Snowflake/snowflake-arctic-embed-m-v1.5",
+    "retrieval_top_p": 0.02,
+    "retrieval_top_k": null,
+    "min_score": -0.5,
+    "max_score": 0.8,
+    "max_retrieve": 10,
+    "embed_batch_size": 32,
+    "n_docs": 10000,
+    "n_queries": 50,
+    "corpus_seed": 7,
+    "query_seed": 42,
+    "seed": 42
+  },
+  "metrics": {
+    "temperatures": [
+      0.1,
+      0.3,
+      0.5,
+      0.7,
+      1.0
+    ],
+    "n_zero_doc": 4,
+    "quality_metric": "rouge_l_f1 (lightweight proxy; full BERTScore in Stage 5)",
+    "per_temperature": [
+      {
+        "temperature": 0.1,
+        "n_queries": 50,
+        "n_zero_doc": 4,
+        "mean_trigger": {
+          "A": 0.8846054629626132,
+          "B_k10_t0.7": 0.6461776533052792,
+          "B_k20_t0.9": 0.3061959118056765
+        },
+        "mean_rouge_l": 0.11426032809858332,
+        "seconds": 399.4007987976074
+      },
+      {
+        "temperature": 0.3,
+        "n_queries": 50,
+        "n_zero_doc": 4,
+        "mean_trigger": {
+          "A": 0.8909340571081859,
+          "B_k10_t0.7": 0.6693960542316972,
+          "B_k20_t0.9": 0.32012656658134886
+        },
+        "mean_rouge_l": 0.10989844207734428,
+        "seconds": 389.68241930007935
+      },
+      {
+        "temperature": 0.5,
+        "n_queries": 50,
+        "n_zero_doc": 4,
+        "mean_trigger": {
+          "A": 0.8909825567923244,
+          "B_k10_t0.7": 0.6580732489189883,
+          "B_k20_t0.9": 0.3098451110760379
+        },
+        "mean_rouge_l": 0.10980440345453552,
+        "seconds": 370.4293165206909
+      },
+      {
+        "temperature": 0.7,
+        "n_queries": 50,
+        "n_zero_doc": 4,
+        "mean_trigger": {
+          "A": 0.8807147077631992,
+          "B_k10_t0.7": 0.655314949674645,
+          "B_k20_t0.9": 0.302895225445243
+        },
+        "mean_rouge_l": 0.1086487005883995,
+        "seconds": 380.29711866378784
+      },
+      {
+        "temperature": 1.0,
+        "n_queries": 50,
+        "n_zero_doc": 4,
+        "mean_trigger": {
+          "A": 0.87622405380184,
+          "B_k10_t0.7": 0.6541752445832355,
+          "B_k20_t0.9": 0.3160935688074852
+        },
+        "mean_rouge_l": 0.1105848194108457,
+        "seconds": 382.74438738822937
+      }
+    ]
+  },
+  "per_item": [
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,I am a 28 year old unmarried woman. Last month my period was irregular. I got my periods on the 30th of last month and it was already 20 days later from the actual due. Initially, I had spotting for five days, then I bled for seven days and again, had spotting for three days. Now, I am bleeding again from today on the 27th of this month. Please help me out. My height is 155 cm and weight is 63 kg. I have this complaint once since last month. Normally, my periods will occur in an interval on 40 to 45 days. This is the first time I am experiencing spotting, bleeding and delay. Is this a serious problem?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12121212121212122,
+      "trigger": {
+        "A": 0.84375,
+        "B_k10_t0.7": 0.5,
+        "B_k20_t0.9": 0.1640625
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,So I never had acne on the back, maybe one or two single, but after visiting this massage center, which I know was a big mistake, my lower back is full of acne. I tried a couple of ointments, did not work. Cortisone helped a little, but not really. I think I need oral back up, any suggestions?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.06711409395973154,
+      "trigger": {
+        "A": 0.8125,
+        "B_k10_t0.7": 0.5078125,
+        "B_k20_t0.9": 0.1484375
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I want to lose my weight. I am very obsessed. I want to get slim. Please tell me some exercises to lose weight. Please tell me exercises that I can do anywhere without any types of equipment.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.14545454545454548,
+      "trigger": {
+        "A": 0.9375,
+        "B_k10_t0.7": 0.75,
+        "B_k20_t0.9": 0.4921875
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I am an 18 year old male. My weight 46 Kg.I have been masturbating since 2010 till now.But now, I have been facing problems like premature ejaculation, nightfall, other problems like loss of appetite, weakness and poor memory. I ejaculate 3 times within 1 hour. I also watch porn videos. There is a swelling in my penis. I have attached pictures of the same.But I have no pain. Sometimes I have a burning sensation.My testicles start paining after 20 minutes of ejaculation and the pain goes away after 2 to 3 hours.And I do not feel hungry after masturbation.Is there anything wrong?I want to quit masturbation. So please guide me quit this forever.",
+      "n_documents": 10,
+      "n_steps": 31,
+      "rouge_l": 0.1282051282051282,
+      "trigger": {
+        "A": 0.8064516129032258,
+        "B_k10_t0.7": 0.5483870967741935,
+        "B_k20_t0.9": 0.16129032258064516
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,I am facing hair loss problem for the past three years. I am a male, 25 years old, 5.4 inches height and 71 kg weight. My hair volume becomes very less. Please help.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12738853503184713,
+      "trigger": {
+        "A": 0.859375,
+        "B_k10_t0.7": 0.5625,
+        "B_k20_t0.9": 0.109375
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,What are the causes of pain in the first metatarsal that radiate to the entire forefoot?",
+      "n_documents": 1,
+      "n_steps": 128,
+      "rouge_l": 0.05128205128205129,
+      "trigger": {
+        "A": 0.9296875,
+        "B_k10_t0.7": 0.703125,
+        "B_k20_t0.9": 0.375
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,I am a 24 year old female. I am in a relationship since three years. I am not treated with the same love and dignity by the person. In this duration of our relationship, he left me twice for two months without communication, and he used to text when he needed anything. It is always me, who has to give and make efforts. Whereas on the other end, he seems happy, and he does not bother nor miss me till he wants to have fun or money. He often treats me as an option. If I call, he gets irritated, and if I message, he just ignores them. I think it is time to put a stop to this. He does not give any commitment. He often says that some day our paths will be different. He wants materialistic things from me, rather than wanting me.Whenever I talk about marriage, he says that his family will not support us. Still, he wants to keep a relationship with me. I have left my close ones, and I have changed my personality for him. He was good before, but now I do not recognize him. I feel like a beggar, who begs for his time. I know that I am holding on to someone whose does not even care about me, but I am unable to get over it. I tried to divert myself with my hobbies and interests. I left my job, and now I do not have money. And he is earning well now. All this frustration is ruining me. I have insomnia, and I cannot sleep at nights. I have got hypothyroidism. This lonely feeling is eating me. I have many things to do, but I am not able to work on anything. Though I train myself to be strong, ultimately I land up getting fooled by his messages or the thought of seeing him with somebody else. But, I cannot take this kind of behavior from him. Please help.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12658227848101267,
+      "trigger": {
+        "A": 0.9453125,
+        "B_k10_t0.7": 0.828125,
+        "B_k20_t0.9": 0.578125
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I did not realize my surgery would be so soon. I have been taking Ashwagandha and an Omega 3 supplement. I am having an enlarged lymph node removed in my neck under general anesthesia as an outpatient procedure. Will it be safe to undergo this procedure under anesthesia in a few days? I heard this might interfere with the effectiveness of the anesthesia.",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.09722222222222221,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I am married for ten months. I had a miscarriage of 10 weeks baby. Now again, I expect five weeks of pregnancy. At my first miscarriage checkup, the doctor said that I have a fibroid of 3.2 cm within the uterus at the intermural side. Also, at that time, my TORCH test was positive. T and R were positive, and I took medicines. Will I have a safe pregnancy this time? What can I do? Please suggest.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12396694214876032,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.65625,
+        "B_k20_t0.9": 0.3046875
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi,I am approaching you since I am concerned about a situation regarding which I am very embarrassed. I am a 43 year old female. I am normally healthy. I am 178cm tall and I weigh 75kg. Around 9-12 months ago, I started to suffer from anal itching.It is rather intense at night, after passing stools and during/after having intercourse or anal masturbation.I also have few lumps on my anal ring that seem to grow outside of my anal opening as an extended piece of flesh.They are very sensitive but they are odd and it really troubles me.I fear that my problem started as a result of anal masturbation and anal sex.I feel very ashamed to say this. I was using anal toys and hand and I am afraid that during these years I myself  have created problems to my health and I do not know how to fix it.I do not have constipation and my stool is normal.I pass motion once a day and I have no abdominal pain while passing stools.Sometimes when I have anal sex I start bleeding from my rectum for a few seconds and then it stops.It does not bleed when I pass stools or any other time.I have not attained menopause even though my period seems to be every 6-7 weeks these days.I would appreciate if you can help me understand how to treat this issue and what should I do (i.e, special diet, special creams, instructions on how to clean the area etc.)Help me please, I am looking for a very discreet way to handle my situation since I am too concerned about talking with my spouse.",
+      "n_documents": 10,
+      "n_steps": 66,
+      "rouge_l": 0.13333333333333333,
+      "trigger": {
+        "A": 0.8787878787878788,
+        "B_k10_t0.7": 0.6818181818181818,
+        "B_k20_t0.9": 0.2878787878787879
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,My eyes get watery when I talk to people or when I am nervous. Why is that happening?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1125,
+      "trigger": {
+        "A": 0.9375,
+        "B_k10_t0.7": 0.6640625,
+        "B_k20_t0.9": 0.3515625
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I have had a sharp pain in my tailbone area when I am sitting or standing up. This has been going on for several months and has not improved. I recently saw a doctor. He diagnosed it as a curve in my lumbar and suggested I see a chiropractor here. Is there anything else I could do to fix this problem?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.15126050420168066,
+      "trigger": {
+        "A": 0.921875,
+        "B_k10_t0.7": 0.6328125,
+        "B_k20_t0.9": 0.3203125
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I went to the doctor for a physical on 8th. I had blood work done. I went to the ER recently because I was feeling dizzy and tingling. The doctor said I have vertigo and they were not sure of the tingling. I received my blood work from my ER visit and I compared it to my annual exam. Below are the results:Between 8th and now:RBC 5.13 5.35HGB 16.1 16.7HCT 48.5 48.5MCH 31.5 31.2NA 131 141CL 105 97Protein 8.3 8.9SGOT 41 23All other numbers were normal. Do I need to be concerned with these numbers? After my 8th appt, the doctor did prescribe 20 mg of Lipitor (generic), but I stopped taking it after two weeks. I have also had diarrhea. I currently take Synthroid 0.05 mg. My blood pressure was high at my 8th appointment. It had never been high before.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11612903225806452,
+      "trigger": {
+        "A": 0.921875,
+        "B_k10_t0.7": 0.765625,
+        "B_k20_t0.9": 0.421875
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,I had genital warts last year, which has been treated. I got Pap smear, HIV, VDRL, and HSV tests, and all tests were non-reactive. I have white vaginal discharge, which is more than normal. The discharge is not smelly, and I do not have any itching. I have done an antibiotic course also, but this it is not improving. Please help. What is wrong with me?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09929078014184398,
+      "trigger": {
+        "A": 0.875,
+        "B_k10_t0.7": 0.5859375,
+        "B_k20_t0.9": 0.2109375
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I got a cavity last year. I have left it untreated. It hurt really bad a year ago and stopped, but is not occurring again. I have not gone to the dentist because I do not want to make my parents spend the money. So, I have just been dealing with it. But it hurts really bad. Is there anything I can do?",
+      "n_documents": 10,
+      "n_steps": 45,
+      "rouge_l": 0.12413793103448276,
+      "trigger": {
+        "A": 0.8444444444444444,
+        "B_k10_t0.7": 0.4222222222222222,
+        "B_k20_t0.9": 0.17777777777777778
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,My daughter just had a tooth surgery and bleeding is not stopping. Is it normal? Three hours before only she had it.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11409395973154361,
+      "trigger": {
+        "A": 0.828125,
+        "B_k10_t0.7": 0.6875,
+        "B_k20_t0.9": 0.2578125
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,I have right shoulder and posterior scapula pain. The pain began a few years ago when a huge dog suddenly tried to run while I was holding his leash, resulting in my arm being pulled. A year after that, I fell on rocks and landed with a right outstretched hand. Now, my right shoulder is lower than the left and winged scapula. My x-rays are normal. I have attached my MRI. Do you notice any abnormalities in my right shoulder MRI?",
+      "n_documents": 10,
+      "n_steps": 30,
+      "rouge_l": 0.13333333333333333,
+      "trigger": {
+        "A": 0.7666666666666667,
+        "B_k10_t0.7": 0.6333333333333333,
+        "B_k20_t0.9": 0.3333333333333333
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I am suffering from epididymitis problem. Sometimes I am having pain in testis while having a gastric issue as well. Kindly help me to get rid of this",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.0975609756097561,
+      "trigger": {
+        "A": 0.875,
+        "B_k10_t0.7": 0.5625,
+        "B_k20_t0.9": 0.265625
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor, My baby is 5 months old. I have given vaccine to her on 18th of this month, since then she was having fever every four hours the other day too. After that she is not drinking breastmilk and formula too. Now only drinks at night time while sleeping. What should I do?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.16574585635359113,
+      "trigger": {
+        "A": 0.859375,
+        "B_k10_t0.7": 0.6875,
+        "B_k20_t0.9": 0.3046875
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi,My hands are extremely rough since childhood. I am 17 years old now. I have tried almost everything to get rid of this problem. I also have so many lines on my palm and fingers. Suggest me some treatment.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11290322580645161,
+      "trigger": {
+        "A": 0.84375,
+        "B_k10_t0.7": 0.6484375,
+        "B_k20_t0.9": 0.40625
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I am 33 years old. I have been trying to conceive for eight months from now. I have monthly periods and positive OPKs and BBT shifts, but periods are also very light, basically spotting. I had an Ultrasound which showed a few cysts, had mildly elevated testosterone, normal LH and FSH, normal estrogen, low progesterone. My PCP is not convinced. I have PCOS but I am wondering if that is still a possibility and what I should anticipate for treatment in the future (clomid vs. progesterone therapy, etc.)?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09374999999999999,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.71875,
+        "B_k20_t0.9": 0.2578125
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,My mother is 62 years old. She has purple-like patches on her arms and legs as shown in the attached picture. She said that she has it for over three to four years and these patches fade in a few days once they appear. My mother also has diabetes and hypertension. She is using some antibiotics for diabetes and hypertension. She also has substernal goiter and her biopsy was negative. I am attaching her blood and hormone results, which are in the normal range. Liver function tests were also normal. What are these fading purple-like patches?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11188811188811189,
+      "trigger": {
+        "A": 0.9296875,
+        "B_k10_t0.7": 0.65625,
+        "B_k20_t0.9": 0.3046875
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I get pain when my husband inserts, but I am not sure it is because of fear or physical pain. I contract my muscles and thighs, and he is not able to do it. We are not having proper sexual intercourse. I get highly wet too but contract myself when he inserts. Please help. I feel it is more of mental blockage.",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.11518324607329843,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,I have read that drinking alcohol affects the HIV test results. Does increased alcohol intake delay seroconversion time? If so, then how long one should wait? Three or six months? For such cases, can we take HIV DNA PCR as a screening test? Whether this test is also affected by much more alcohol intake or not. How reliable is this test? I had oral sex around three years back, and I consume 150 ml alcohol regularly. For such a person, what HIV screening is recommended? For late seroconversion, which test is taken to find out HIV infection? Please explain in detail, as I am obsessed with HIV. Thanks.",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.031007751937984496,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,My wife is suffering from peripartum cardiomyopathy for the past six months. She is taking beta blockers and diuretic medicine for the past four months. Her heart EF is 38 % with flat T in ECG reports. Her heart function is normal. How many days does it take to get cured?",
+      "n_documents": 10,
+      "n_steps": 28,
+      "rouge_l": 0.059405940594059396,
+      "trigger": {
+        "A": 0.9285714285714286,
+        "B_k10_t0.7": 0.35714285714285715,
+        "B_k20_t0.9": 0.17857142857142858
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,Recently, I did a full blood workup, and my eosinophil count, WBC, and B12 levels are high. I am a chronic sufferer of pouchitis. My creatinine and Bun levels are normal, like all other levels. I often take many supplements daily. Can you please help me? I am scared.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.175609756097561,
+      "trigger": {
+        "A": 0.9140625,
+        "B_k10_t0.7": 0.6484375,
+        "B_k20_t0.9": 0.234375
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,My husband and I have been in a monogamous relationship (I believe) for 14 years. We had sexual partners before this. A few weeks into my first pregnancy, he and I have just broken out into HPV genital warts. Is it possible for warts to appear 14 years later? Is it more probable that my partner has been unfaithful?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.15909090909090912,
+      "trigger": {
+        "A": 0.921875,
+        "B_k10_t0.7": 0.7265625,
+        "B_k20_t0.9": 0.4296875
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I am 27 years old and going to get married after three months. I am facing premature ejaculation. I have a bad dream after two or three days regular basis. So fearing about marriage as I have this problem. Semen maybe not thick enough and ejaculate after only 12 to 15 strokes. Need valuable suggestions from your end.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.07650273224043715,
+      "trigger": {
+        "A": 0.859375,
+        "B_k10_t0.7": 0.6171875,
+        "B_k20_t0.9": 0.328125
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I am 23 years old. I am obese and have a family history of cardiac arrest. My father got cardiac arrest at the age of 53. I have consulted the local cardiologist and gone through ECG, echo, TMT, lipid, hs-CRP and other blood tests. All the tests were normal except heart rate, which was 110 and also high BP. I am taking Rosufit 10, Nebistar 5 and Cilaheart 10. Currently, I am feeling warm in the left side of my chest for a short span of time. Sometimes, I have slight pain in my left hand and feels like a pinch type of pain in the center of the chest when I inhale and exhale. Is it normal?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1391304347826087,
+      "trigger": {
+        "A": 0.8671875,
+        "B_k10_t0.7": 0.640625,
+        "B_k20_t0.9": 0.296875
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,Is fibrous dysplasia a life-threatening disease or just a cosmetic problem in the upper mouth? Can CT scan show the overgrowth of bone in the upper mouth?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.13580246913580246,
+      "trigger": {
+        "A": 0.921875,
+        "B_k10_t0.7": 0.7109375,
+        "B_k20_t0.9": 0.3203125
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,The length of my penis is 5 and 1/2 inches and I am 38 years old. How can I increase my penis length? Is there any medicine, cream, lotion, oil or gel?",
+      "n_documents": 10,
+      "n_steps": 37,
+      "rouge_l": 0.11475409836065574,
+      "trigger": {
+        "A": 0.8378378378378378,
+        "B_k10_t0.7": 0.6216216216216216,
+        "B_k20_t0.9": 0.13513513513513514
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,I am 30 years old. I have completed my marriage life for three years. I have no children. I have PCOD and thyroid. I have a prolactin level of 53 ng/mL. I am taking Metformin 500 mg. I am taking Caberlin 0.25 mg weekly once. I have severe hair loss. Can I take Kalarchikai choornam along with this medication?",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.1317365269461078,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,My period is late by 21 days late. I got all the pregnancy tests done, but everything came back negative. I have lower left side pain, feel bloated on that side, back pain, and abdomen pain. I am 18 years old and weigh 170 lbs.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1038961038961039,
+      "trigger": {
+        "A": 0.8671875,
+        "B_k10_t0.7": 0.6171875,
+        "B_k20_t0.9": 0.2578125
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I feel terrible before periods and I cannot sleep. My tummy comes out, also my breast become heavy, and I feel no hunger at all. My periods are regular but I am just tired of this thing happening to me even though my lifestyle is good. I am a vegan. Please help me. I want to cure it naturally.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.13432835820895525,
+      "trigger": {
+        "A": 0.9140625,
+        "B_k10_t0.7": 0.7890625,
+        "B_k20_t0.9": 0.40625
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,I have an STD question and hope to have an STD specialist doctor to assist me. I had a sexual contact three years ago and only last month I went for (VDRL nontreponemal test) and is negative. I have read online that after several years or after sometime usually, the result can be negative even if a person had syphilis before. I am afraid it might be a false negative since it was a few years ago. May I know should I test for Treponemal test such as TPPA or FTA-ABS to rule out the false negative by VDRL after three years test, I worry it might false negative by VDRL? The negative VDRL test was one month ago and possible exposure was three years ago. Does this mean the person does not have active syphilis infection? Does this also mean it would not proceed to latent or tertiary syphilis that will damage the body such as paralysis, numbness, gradual blindness and dementia?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.07246376811594203,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.671875,
+        "B_k20_t0.9": 0.3359375
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Dear Doctor,I have taken Harmoni F for the past three months. Now I stopped taking it and planning for a baby.When will I get pregnant?",
+      "n_documents": 10,
+      "n_steps": 62,
+      "rouge_l": 0.09302325581395349,
+      "trigger": {
+        "A": 0.8548387096774194,
+        "B_k10_t0.7": 0.5,
+        "B_k20_t0.9": 0.24193548387096775
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I am 60 years old. I am a Parkinson\\s patient. For about the last six months I am having pain in the left arm, shoulder and right leg from thighs downward.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1476510067114094,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.625,
+        "B_k20_t0.9": 0.2890625
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,Since last 7 to 8 months I am having an eye infection, like a stye. It is getting frequent almost after every 3 to 4 weeks. I recollect having collided with somebody about one and half years back, hurt on my right eye with somebody\\s elbow and had a swollen eye, very painful and under the eye, it is red and swollen. After about 4 to 5 days, it started healing, and gradually I forgot about it. Now with this frequent infection in the same eye after every 3 to 4 weeks which lasts 3 to 5 days, sometimes pus and little blood come out and sometimes it heals without any pus coming out. This time it started with an itch and has gradually swollen and is very itchy and painful and red and swollen inside and outside the eye.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08641975308641976,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.7421875,
+        "B_k20_t0.9": 0.3203125
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,I just had an EGD with biopsy, polypectomy. It showed a hianal hernia 2 cm. I am attaching photos. The doctor took biopsies, said no cancer. I have had breast cancer in the past. I am having pain in the chest when I swallow, and sternum today. Will that subside? Is it from the bleeding? And, can you recommend the best pill to take for this pain, taking Pantoprazole now? And what should I take for this problem, what should I eat? (Can you assure there is no cancer)?",
+      "n_documents": 10,
+      "n_steps": 46,
+      "rouge_l": 0.08633093525179855,
+      "trigger": {
+        "A": 0.8695652173913043,
+        "B_k10_t0.7": 0.45652173913043476,
+        "B_k20_t0.9": 0.1956521739130435
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,My son is 1 and a half years old. A few months ago we came to know that his Hb is 4.3 and Hb F is 92 percent and that he has beta thalassemia intermedia. He was immediately transfused once. Now he is taking vitamin C, and Hydroxy and Folic acid and his Hb are 10.2. Please suggest some diet for him to maintain his health.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09473684210526315,
+      "trigger": {
+        "A": 0.921875,
+        "B_k10_t0.7": 0.6484375,
+        "B_k20_t0.9": 0.296875
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I have had a sore throat on and off, for the past few weeks. It is not severe, but more of an annoyance with some referred ear pain. This week, I had a family member, who is a nurse, look at my throat to see if it was red or irritated. She noted I had quite a bit of post-nasal drip, but she could see no other issues. I had my tonsils removed as a kid, so they definitely are not the issue. I was thinking this might be caused by allergies, the trees and plants around are starting to bloom. I started taking some Claritin on top of painkillers, earlier this week. I also have been gargling with salt water. Those things seemed to help for a day or two, and the issue seemed to go away.Fast forward to last night, I woke up in the middle of the night with a burning pain in my stomach. This morning the burning pain keeps coming and going, and I can feel a lot of mucus dripping down the back of my throat. Is a burning stomach usually something that can be linked to post-nasal drip? I have never had an issue with acid reflux, so I do not think it is that. Also, the burning sensation is limited only to my lower abdomen.I typically do not have issues with severe allergies, so I am wondering if this could be caused by a virus? To be honest, I do not have a lot of confidence in my local doctor\\s office, and they tend to order a bunch of tests then overcharge for them. So I am wondering if I can get away with not seeing a doctor. I have ordered an air purifier for my room, and I am taking the allergy medicines religiously. Is there something else I can take or use to alleviate these symptoms? Or should I suck it up and see a doctor? I will also add that with these symptoms, I have had little to no nasal congestion or coughing. Thanks.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.07874015748031496,
+      "trigger": {
+        "A": 0.9375,
+        "B_k10_t0.7": 0.78125,
+        "B_k20_t0.9": 0.421875
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I had a white bump on my penis for the past three months. It did not cause any pain when I touched it, and when I tried to remove it in the shower, it did not budge. It is single and there was nothing else resembling it that showed up on my penis. It showed up maybe a day or two after sexual contact with my girlfriend. I am not sure if it is an STD.Today, during the shower I realized it was not there anymore. It either fell off or shrank, I have not been paying much attention to it the last couple days so I am not really sure. I am attaching a picture of what it looked like when I had it, and what it looks like now. It does not look like any STDs I have seen online, so I am at a loss as to what it could have been. Any help would be appreciated.",
+      "n_documents": 10,
+      "n_steps": 40,
+      "rouge_l": 0.06015037593984963,
+      "trigger": {
+        "A": 0.85,
+        "B_k10_t0.7": 0.425,
+        "B_k20_t0.9": 0.1
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,My urine is foamy. I am confused whether everyone will get bubble and foamy urine while urinating. Please explain me.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12571428571428572,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.75,
+        "B_k20_t0.9": 0.421875
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "for piles , am using himalaya tablets .daily 2 tablets...but cant able sit properly due to anal itching ......please give me a medicine",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.13999999999999999,
+      "trigger": {
+        "A": 0.8515625,
+        "B_k10_t0.7": 0.5625,
+        "B_k20_t0.9": 0.203125
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I am 35 years old. About three hours ago, I was fleaing my dogs when I got a tiny bit of the flea killer in my mouth and on my lip. It was not alot. Will it harm me?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.125,
+      "trigger": {
+        "A": 0.8671875,
+        "B_k10_t0.7": 0.6328125,
+        "B_k20_t0.9": 0.234375
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,I want to explain my wife\\s situation and I need your help and assistance. When my wife was in the kitchen, suddenly she felt some pain and heat in the upper part of her stomach and felt all her body become hot. I took her to the hospital, in the emergency department her pressure was 110/70 mmHg and the doctor requested ECG.The doctor showed some kind of worry in respect to the ECG, made some mark in the ECG and requested for a blood test. After four hours he repeated the blood test and the ECG and then he discharged her from the hospital and gave her some medicine for the stomach and advised me to follow up with heart doctor.Then we went to a heart doctor and he did another ECG and echo for her heart and advised us to get a CT image of her heart, so that he can decide and give opinion. We did not go for CT image until now and went to another doctor. He made another ECG and once he saw the ECG he was surprised and said that the ECG belongs to women of age 60 years old and not 32 years old. He requested blood test, gastroscopy, exercise ECG and prescribed Concor tablets 2.5 mg.Please advise me what is the problem with my wife\\s ECG? And what shall I do next? Shall I go with CT image or exercise ECG? Is it fine to take Concor tablets? By the way my wife age is 32 years old and we have four children of age 12, 9, 6 and 4 years. This is the first time my wife complaints of pain and now she is feeling better and doing her household works normally. Also, she does not have diabetes or blood pressure. Her weight is 63 kg, which is correct for her height. Please assist and advise me.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11194029850746268,
+      "trigger": {
+        "A": 0.8828125,
+        "B_k10_t0.7": 0.765625,
+        "B_k20_t0.9": 0.3671875
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hi doctor,I was just wondering how long germs would live on in a liquid lipstick? Around five weeks ago I had a vomiting bug, most likely gastro. I went out on Saturday night and wore a liquid lipstick, and was sick on Sunday. Will these germs still be living in the liquid lipstick and make me sick again or will they have died. Also, if I shared my liquid lipstick with someone who potentially had a cold sore, I am not sure if they get them or not, would those germs live in the liquid lipstick?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12811387900355872,
+      "trigger": {
+        "A": 0.859375,
+        "B_k10_t0.7": 0.7109375,
+        "B_k20_t0.9": 0.3359375
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I am an 18-year-old male and I am trying to find out if there is any way to lower my hairline. I had a big forehead since birth and I am wondering if there is any way to change that.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.18627450980392157,
+      "trigger": {
+        "A": 0.84375,
+        "B_k10_t0.7": 0.671875,
+        "B_k20_t0.9": 0.421875
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "Hello doctor,I want to buy some equipment or medial device to prevent snoring during sleep. It should be safe and be able to buy online, preferably FDA approved.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11464968152866244,
+      "trigger": {
+        "A": 0.953125,
+        "B_k10_t0.7": 0.8125,
+        "B_k20_t0.9": 0.5234375
+      }
+    },
+    {
+      "temperature": 0.1,
+      "query": "What are the possibilities of transmitting HSV2 from an infected woman to a man and how to prevent it if they intend to enter into a relationship. Thanks",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.13100436681222707,
+      "trigger": {
+        "A": 0.953125,
+        "B_k10_t0.7": 0.8359375,
+        "B_k20_t0.9": 0.5546875
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,I am a 28 year old unmarried woman. Last month my period was irregular. I got my periods on the 30th of last month and it was already 20 days later from the actual due. Initially, I had spotting for five days, then I bled for seven days and again, had spotting for three days. Now, I am bleeding again from today on the 27th of this month. Please help me out. My height is 155 cm and weight is 63 kg. I have this complaint once since last month. Normally, my periods will occur in an interval on 40 to 45 days. This is the first time I am experiencing spotting, bleeding and delay. Is this a serious problem?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12244897959183673,
+      "trigger": {
+        "A": 0.8203125,
+        "B_k10_t0.7": 0.4921875,
+        "B_k20_t0.9": 0.1640625
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,So I never had acne on the back, maybe one or two single, but after visiting this massage center, which I know was a big mistake, my lower back is full of acne. I tried a couple of ointments, did not work. Cortisone helped a little, but not really. I think I need oral back up, any suggestions?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.05517241379310345,
+      "trigger": {
+        "A": 0.84375,
+        "B_k10_t0.7": 0.46875,
+        "B_k20_t0.9": 0.15625
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I want to lose my weight. I am very obsessed. I want to get slim. Please tell me some exercises to lose weight. Please tell me exercises that I can do anywhere without any types of equipment.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10975609756097561,
+      "trigger": {
+        "A": 0.9609375,
+        "B_k10_t0.7": 0.7890625,
+        "B_k20_t0.9": 0.5625
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I am an 18 year old male. My weight 46 Kg.I have been masturbating since 2010 till now.But now, I have been facing problems like premature ejaculation, nightfall, other problems like loss of appetite, weakness and poor memory. I ejaculate 3 times within 1 hour. I also watch porn videos. There is a swelling in my penis. I have attached pictures of the same.But I have no pain. Sometimes I have a burning sensation.My testicles start paining after 20 minutes of ejaculation and the pain goes away after 2 to 3 hours.And I do not feel hungry after masturbation.Is there anything wrong?I want to quit masturbation. So please guide me quit this forever.",
+      "n_documents": 10,
+      "n_steps": 44,
+      "rouge_l": 0.15555555555555556,
+      "trigger": {
+        "A": 0.9318181818181818,
+        "B_k10_t0.7": 0.5,
+        "B_k20_t0.9": 0.20454545454545456
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,I am facing hair loss problem for the past three years. I am a male, 25 years old, 5.4 inches height and 71 kg weight. My hair volume becomes very less. Please help.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.17218543046357615,
+      "trigger": {
+        "A": 0.859375,
+        "B_k10_t0.7": 0.5703125,
+        "B_k20_t0.9": 0.2421875
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,What are the causes of pain in the first metatarsal that radiate to the entire forefoot?",
+      "n_documents": 1,
+      "n_steps": 128,
+      "rouge_l": 0.052631578947368425,
+      "trigger": {
+        "A": 0.9453125,
+        "B_k10_t0.7": 0.703125,
+        "B_k20_t0.9": 0.3828125
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,I am a 24 year old female. I am in a relationship since three years. I am not treated with the same love and dignity by the person. In this duration of our relationship, he left me twice for two months without communication, and he used to text when he needed anything. It is always me, who has to give and make efforts. Whereas on the other end, he seems happy, and he does not bother nor miss me till he wants to have fun or money. He often treats me as an option. If I call, he gets irritated, and if I message, he just ignores them. I think it is time to put a stop to this. He does not give any commitment. He often says that some day our paths will be different. He wants materialistic things from me, rather than wanting me.Whenever I talk about marriage, he says that his family will not support us. Still, he wants to keep a relationship with me. I have left my close ones, and I have changed my personality for him. He was good before, but now I do not recognize him. I feel like a beggar, who begs for his time. I know that I am holding on to someone whose does not even care about me, but I am unable to get over it. I tried to divert myself with my hobbies and interests. I left my job, and now I do not have money. And he is earning well now. All this frustration is ruining me. I have insomnia, and I cannot sleep at nights. I have got hypothyroidism. This lonely feeling is eating me. I have many things to do, but I am not able to work on anything. Though I train myself to be strong, ultimately I land up getting fooled by his messages or the thought of seeing him with somebody else. But, I cannot take this kind of behavior from him. Please help.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11612903225806452,
+      "trigger": {
+        "A": 0.953125,
+        "B_k10_t0.7": 0.8125,
+        "B_k20_t0.9": 0.5
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I did not realize my surgery would be so soon. I have been taking Ashwagandha and an Omega 3 supplement. I am having an enlarged lymph node removed in my neck under general anesthesia as an outpatient procedure. Will it be safe to undergo this procedure under anesthesia in a few days? I heard this might interfere with the effectiveness of the anesthesia.",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.08108108108108109,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I am married for ten months. I had a miscarriage of 10 weeks baby. Now again, I expect five weeks of pregnancy. At my first miscarriage checkup, the doctor said that I have a fibroid of 3.2 cm within the uterus at the intermural side. Also, at that time, my TORCH test was positive. T and R were positive, and I took medicines. Will I have a safe pregnancy this time? What can I do? Please suggest.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12955465587044532,
+      "trigger": {
+        "A": 0.8515625,
+        "B_k10_t0.7": 0.5546875,
+        "B_k20_t0.9": 0.2421875
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi,I am approaching you since I am concerned about a situation regarding which I am very embarrassed. I am a 43 year old female. I am normally healthy. I am 178cm tall and I weigh 75kg. Around 9-12 months ago, I started to suffer from anal itching.It is rather intense at night, after passing stools and during/after having intercourse or anal masturbation.I also have few lumps on my anal ring that seem to grow outside of my anal opening as an extended piece of flesh.They are very sensitive but they are odd and it really troubles me.I fear that my problem started as a result of anal masturbation and anal sex.I feel very ashamed to say this. I was using anal toys and hand and I am afraid that during these years I myself  have created problems to my health and I do not know how to fix it.I do not have constipation and my stool is normal.I pass motion once a day and I have no abdominal pain while passing stools.Sometimes when I have anal sex I start bleeding from my rectum for a few seconds and then it stops.It does not bleed when I pass stools or any other time.I have not attained menopause even though my period seems to be every 6-7 weeks these days.I would appreciate if you can help me understand how to treat this issue and what should I do (i.e, special diet, special creams, instructions on how to clean the area etc.)Help me please, I am looking for a very discreet way to handle my situation since I am too concerned about talking with my spouse.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12422360248447206,
+      "trigger": {
+        "A": 0.9140625,
+        "B_k10_t0.7": 0.7109375,
+        "B_k20_t0.9": 0.296875
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,My eyes get watery when I talk to people or when I am nervous. Why is that happening?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10256410256410255,
+      "trigger": {
+        "A": 0.9296875,
+        "B_k10_t0.7": 0.6953125,
+        "B_k20_t0.9": 0.4453125
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I have had a sharp pain in my tailbone area when I am sitting or standing up. This has been going on for several months and has not improved. I recently saw a doctor. He diagnosed it as a curve in my lumbar and suggested I see a chiropractor here. Is there anything else I could do to fix this problem?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.14468085106382977,
+      "trigger": {
+        "A": 0.9140625,
+        "B_k10_t0.7": 0.6328125,
+        "B_k20_t0.9": 0.3125
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I went to the doctor for a physical on 8th. I had blood work done. I went to the ER recently because I was feeling dizzy and tingling. The doctor said I have vertigo and they were not sure of the tingling. I received my blood work from my ER visit and I compared it to my annual exam. Below are the results:Between 8th and now:RBC 5.13 5.35HGB 16.1 16.7HCT 48.5 48.5MCH 31.5 31.2NA 131 141CL 105 97Protein 8.3 8.9SGOT 41 23All other numbers were normal. Do I need to be concerned with these numbers? After my 8th appt, the doctor did prescribe 20 mg of Lipitor (generic), but I stopped taking it after two weeks. I have also had diarrhea. I currently take Synthroid 0.05 mg. My blood pressure was high at my 8th appointment. It had never been high before.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11320754716981132,
+      "trigger": {
+        "A": 0.9296875,
+        "B_k10_t0.7": 0.7734375,
+        "B_k20_t0.9": 0.40625
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,I had genital warts last year, which has been treated. I got Pap smear, HIV, VDRL, and HSV tests, and all tests were non-reactive. I have white vaginal discharge, which is more than normal. The discharge is not smelly, and I do not have any itching. I have done an antibiotic course also, but this it is not improving. Please help. What is wrong with me?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.0851063829787234,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.6015625,
+        "B_k20_t0.9": 0.265625
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I got a cavity last year. I have left it untreated. It hurt really bad a year ago and stopped, but is not occurring again. I have not gone to the dentist because I do not want to make my parents spend the money. So, I have just been dealing with it. But it hurts really bad. Is there anything I can do?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10426540284360189,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.65625,
+        "B_k20_t0.9": 0.28125
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,My daughter just had a tooth surgery and bleeding is not stopping. Is it normal? Three hours before only she had it.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.135048231511254,
+      "trigger": {
+        "A": 0.8828125,
+        "B_k10_t0.7": 0.609375,
+        "B_k20_t0.9": 0.2109375
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,I have right shoulder and posterior scapula pain. The pain began a few years ago when a huge dog suddenly tried to run while I was holding his leash, resulting in my arm being pulled. A year after that, I fell on rocks and landed with a right outstretched hand. Now, my right shoulder is lower than the left and winged scapula. My x-rays are normal. I have attached my MRI. Do you notice any abnormalities in my right shoulder MRI?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12121212121212122,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.71875,
+        "B_k20_t0.9": 0.3203125
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I am suffering from epididymitis problem. Sometimes I am having pain in testis while having a gastric issue as well. Kindly help me to get rid of this",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12048192771084336,
+      "trigger": {
+        "A": 0.875,
+        "B_k10_t0.7": 0.53125,
+        "B_k20_t0.9": 0.2109375
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor, My baby is 5 months old. I have given vaccine to her on 18th of this month, since then she was having fever every four hours the other day too. After that she is not drinking breastmilk and formula too. Now only drinks at night time while sleeping. What should I do?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.14285714285714288,
+      "trigger": {
+        "A": 0.8125,
+        "B_k10_t0.7": 0.671875,
+        "B_k20_t0.9": 0.359375
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi,My hands are extremely rough since childhood. I am 17 years old now. I have tried almost everything to get rid of this problem. I also have so many lines on my palm and fingers. Suggest me some treatment.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11570247933884296,
+      "trigger": {
+        "A": 0.8515625,
+        "B_k10_t0.7": 0.71875,
+        "B_k20_t0.9": 0.34375
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I am 33 years old. I have been trying to conceive for eight months from now. I have monthly periods and positive OPKs and BBT shifts, but periods are also very light, basically spotting. I had an Ultrasound which showed a few cysts, had mildly elevated testosterone, normal LH and FSH, normal estrogen, low progesterone. My PCP is not convinced. I have PCOS but I am wondering if that is still a possibility and what I should anticipate for treatment in the future (clomid vs. progesterone therapy, etc.)?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10294117647058823,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.734375,
+        "B_k20_t0.9": 0.3203125
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,My mother is 62 years old. She has purple-like patches on her arms and legs as shown in the attached picture. She said that she has it for over three to four years and these patches fade in a few days once they appear. My mother also has diabetes and hypertension. She is using some antibiotics for diabetes and hypertension. She also has substernal goiter and her biopsy was negative. I am attaching her blood and hormone results, which are in the normal range. Liver function tests were also normal. What are these fading purple-like patches?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08163265306122448,
+      "trigger": {
+        "A": 0.859375,
+        "B_k10_t0.7": 0.6640625,
+        "B_k20_t0.9": 0.3125
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I get pain when my husband inserts, but I am not sure it is because of fear or physical pain. I contract my muscles and thighs, and he is not able to do it. We are not having proper sexual intercourse. I get highly wet too but contract myself when he inserts. Please help. I feel it is more of mental blockage.",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.1075268817204301,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,I have read that drinking alcohol affects the HIV test results. Does increased alcohol intake delay seroconversion time? If so, then how long one should wait? Three or six months? For such cases, can we take HIV DNA PCR as a screening test? Whether this test is also affected by much more alcohol intake or not. How reliable is this test? I had oral sex around three years back, and I consume 150 ml alcohol regularly. For such a person, what HIV screening is recommended? For late seroconversion, which test is taken to find out HIV infection? Please explain in detail, as I am obsessed with HIV. Thanks.",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.030769230769230767,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,My wife is suffering from peripartum cardiomyopathy for the past six months. She is taking beta blockers and diuretic medicine for the past four months. Her heart EF is 38 % with flat T in ECG reports. Her heart function is normal. How many days does it take to get cured?",
+      "n_documents": 10,
+      "n_steps": 36,
+      "rouge_l": 0.05357142857142856,
+      "trigger": {
+        "A": 0.8611111111111112,
+        "B_k10_t0.7": 0.6666666666666666,
+        "B_k20_t0.9": 0.25
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,Recently, I did a full blood workup, and my eosinophil count, WBC, and B12 levels are high. I am a chronic sufferer of pouchitis. My creatinine and Bun levels are normal, like all other levels. I often take many supplements daily. Can you please help me? I am scared.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1212121212121212,
+      "trigger": {
+        "A": 0.8203125,
+        "B_k10_t0.7": 0.7421875,
+        "B_k20_t0.9": 0.2890625
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,My husband and I have been in a monogamous relationship (I believe) for 14 years. We had sexual partners before this. A few weeks into my first pregnancy, he and I have just broken out into HPV genital warts. Is it possible for warts to appear 14 years later? Is it more probable that my partner has been unfaithful?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.13953488372093023,
+      "trigger": {
+        "A": 0.8828125,
+        "B_k10_t0.7": 0.8203125,
+        "B_k20_t0.9": 0.40625
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I am 27 years old and going to get married after three months. I am facing premature ejaculation. I have a bad dream after two or three days regular basis. So fearing about marriage as I have this problem. Semen maybe not thick enough and ejaculate after only 12 to 15 strokes. Need valuable suggestions from your end.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.07692307692307691,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.671875,
+        "B_k20_t0.9": 0.40625
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I am 23 years old. I am obese and have a family history of cardiac arrest. My father got cardiac arrest at the age of 53. I have consulted the local cardiologist and gone through ECG, echo, TMT, lipid, hs-CRP and other blood tests. All the tests were normal except heart rate, which was 110 and also high BP. I am taking Rosufit 10, Nebistar 5 and Cilaheart 10. Currently, I am feeling warm in the left side of my chest for a short span of time. Sometimes, I have slight pain in my left hand and feels like a pinch type of pain in the center of the chest when I inhale and exhale. Is it normal?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1440677966101695,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.6171875,
+        "B_k20_t0.9": 0.2734375
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,Is fibrous dysplasia a life-threatening disease or just a cosmetic problem in the upper mouth? Can CT scan show the overgrowth of bone in the upper mouth?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.14545454545454548,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.71875,
+        "B_k20_t0.9": 0.3984375
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,The length of my penis is 5 and 1/2 inches and I am 38 years old. How can I increase my penis length? Is there any medicine, cream, lotion, oil or gel?",
+      "n_documents": 10,
+      "n_steps": 41,
+      "rouge_l": 0.11199999999999999,
+      "trigger": {
+        "A": 0.926829268292683,
+        "B_k10_t0.7": 0.6341463414634146,
+        "B_k20_t0.9": 0.17073170731707318
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,I am 30 years old. I have completed my marriage life for three years. I have no children. I have PCOD and thyroid. I have a prolactin level of 53 ng/mL. I am taking Metformin 500 mg. I am taking Caberlin 0.25 mg weekly once. I have severe hair loss. Can I take Kalarchikai choornam along with this medication?",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.12048192771084337,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,My period is late by 21 days late. I got all the pregnancy tests done, but everything came back negative. I have lower left side pain, feel bloated on that side, back pain, and abdomen pain. I am 18 years old and weigh 170 lbs.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.07947019867549669,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.6171875,
+        "B_k20_t0.9": 0.2421875
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I feel terrible before periods and I cannot sleep. My tummy comes out, also my breast become heavy, and I feel no hunger at all. My periods are regular but I am just tired of this thing happening to me even though my lifestyle is good. I am a vegan. Please help me. I want to cure it naturally.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.14925373134328357,
+      "trigger": {
+        "A": 0.921875,
+        "B_k10_t0.7": 0.734375,
+        "B_k20_t0.9": 0.3671875
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,I have an STD question and hope to have an STD specialist doctor to assist me. I had a sexual contact three years ago and only last month I went for (VDRL nontreponemal test) and is negative. I have read online that after several years or after sometime usually, the result can be negative even if a person had syphilis before. I am afraid it might be a false negative since it was a few years ago. May I know should I test for Treponemal test such as TPPA or FTA-ABS to rule out the false negative by VDRL after three years test, I worry it might false negative by VDRL? The negative VDRL test was one month ago and possible exposure was three years ago. Does this mean the person does not have active syphilis infection? Does this also mean it would not proceed to latent or tertiary syphilis that will damage the body such as paralysis, numbness, gradual blindness and dementia?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.0875912408759124,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.7578125,
+        "B_k20_t0.9": 0.3828125
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Dear Doctor,I have taken Harmoni F for the past three months. Now I stopped taking it and planning for a baby.When will I get pregnant?",
+      "n_documents": 10,
+      "n_steps": 26,
+      "rouge_l": 0.07272727272727272,
+      "trigger": {
+        "A": 0.8461538461538461,
+        "B_k10_t0.7": 0.6153846153846154,
+        "B_k20_t0.9": 0.07692307692307693
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I am 60 years old. I am a Parkinson\\s patient. For about the last six months I am having pain in the left arm, shoulder and right leg from thighs downward.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1610738255033557,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.671875,
+        "B_k20_t0.9": 0.359375
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,Since last 7 to 8 months I am having an eye infection, like a stye. It is getting frequent almost after every 3 to 4 weeks. I recollect having collided with somebody about one and half years back, hurt on my right eye with somebody\\s elbow and had a swollen eye, very painful and under the eye, it is red and swollen. After about 4 to 5 days, it started healing, and gradually I forgot about it. Now with this frequent infection in the same eye after every 3 to 4 weeks which lasts 3 to 5 days, sometimes pus and little blood come out and sometimes it heals without any pus coming out. This time it started with an itch and has gradually swollen and is very itchy and painful and red and swollen inside and outside the eye.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08235294117647059,
+      "trigger": {
+        "A": 0.875,
+        "B_k10_t0.7": 0.7578125,
+        "B_k20_t0.9": 0.4140625
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,I just had an EGD with biopsy, polypectomy. It showed a hianal hernia 2 cm. I am attaching photos. The doctor took biopsies, said no cancer. I have had breast cancer in the past. I am having pain in the chest when I swallow, and sternum today. Will that subside? Is it from the bleeding? And, can you recommend the best pill to take for this pain, taking Pantoprazole now? And what should I take for this problem, what should I eat? (Can you assure there is no cancer)?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09137055837563453,
+      "trigger": {
+        "A": 0.8515625,
+        "B_k10_t0.7": 0.7265625,
+        "B_k20_t0.9": 0.3515625
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,My son is 1 and a half years old. A few months ago we came to know that his Hb is 4.3 and Hb F is 92 percent and that he has beta thalassemia intermedia. He was immediately transfused once. Now he is taking vitamin C, and Hydroxy and Folic acid and his Hb are 10.2. Please suggest some diet for him to maintain his health.",
+      "n_documents": 10,
+      "n_steps": 29,
+      "rouge_l": 0.030769230769230767,
+      "trigger": {
+        "A": 0.9310344827586207,
+        "B_k10_t0.7": 0.3793103448275862,
+        "B_k20_t0.9": 0.13793103448275862
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I have had a sore throat on and off, for the past few weeks. It is not severe, but more of an annoyance with some referred ear pain. This week, I had a family member, who is a nurse, look at my throat to see if it was red or irritated. She noted I had quite a bit of post-nasal drip, but she could see no other issues. I had my tonsils removed as a kid, so they definitely are not the issue. I was thinking this might be caused by allergies, the trees and plants around are starting to bloom. I started taking some Claritin on top of painkillers, earlier this week. I also have been gargling with salt water. Those things seemed to help for a day or two, and the issue seemed to go away.Fast forward to last night, I woke up in the middle of the night with a burning pain in my stomach. This morning the burning pain keeps coming and going, and I can feel a lot of mucus dripping down the back of my throat. Is a burning stomach usually something that can be linked to post-nasal drip? I have never had an issue with acid reflux, so I do not think it is that. Also, the burning sensation is limited only to my lower abdomen.I typically do not have issues with severe allergies, so I am wondering if this could be caused by a virus? To be honest, I do not have a lot of confidence in my local doctor\\s office, and they tend to order a bunch of tests then overcharge for them. So I am wondering if I can get away with not seeing a doctor. I have ordered an air purifier for my room, and I am taking the allergy medicines religiously. Is there something else I can take or use to alleviate these symptoms? Or should I suck it up and see a doctor? I will also add that with these symptoms, I have had little to no nasal congestion or coughing. Thanks.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08396946564885496,
+      "trigger": {
+        "A": 0.9296875,
+        "B_k10_t0.7": 0.8046875,
+        "B_k20_t0.9": 0.4609375
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I had a white bump on my penis for the past three months. It did not cause any pain when I touched it, and when I tried to remove it in the shower, it did not budge. It is single and there was nothing else resembling it that showed up on my penis. It showed up maybe a day or two after sexual contact with my girlfriend. I am not sure if it is an STD.Today, during the shower I realized it was not there anymore. It either fell off or shrank, I have not been paying much attention to it the last couple days so I am not really sure. I am attaching a picture of what it looked like when I had it, and what it looks like now. It does not look like any STDs I have seen online, so I am at a loss as to what it could have been. Any help would be appreciated.",
+      "n_documents": 10,
+      "n_steps": 76,
+      "rouge_l": 0.10909090909090909,
+      "trigger": {
+        "A": 0.9078947368421053,
+        "B_k10_t0.7": 0.6842105263157895,
+        "B_k20_t0.9": 0.27631578947368424
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,My urine is foamy. I am confused whether everyone will get bubble and foamy urine while urinating. Please explain me.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1511627906976744,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.78125,
+        "B_k20_t0.9": 0.3671875
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "for piles , am using himalaya tablets .daily 2 tablets...but cant able sit properly due to anal itching ......please give me a medicine",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10309278350515465,
+      "trigger": {
+        "A": 0.8515625,
+        "B_k10_t0.7": 0.5859375,
+        "B_k20_t0.9": 0.3125
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I am 35 years old. About three hours ago, I was fleaing my dogs when I got a tiny bit of the flea killer in my mouth and on my lip. It was not alot. Will it harm me?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.13157894736842102,
+      "trigger": {
+        "A": 0.8671875,
+        "B_k10_t0.7": 0.5234375,
+        "B_k20_t0.9": 0.21875
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,I want to explain my wife\\s situation and I need your help and assistance. When my wife was in the kitchen, suddenly she felt some pain and heat in the upper part of her stomach and felt all her body become hot. I took her to the hospital, in the emergency department her pressure was 110/70 mmHg and the doctor requested ECG.The doctor showed some kind of worry in respect to the ECG, made some mark in the ECG and requested for a blood test. After four hours he repeated the blood test and the ECG and then he discharged her from the hospital and gave her some medicine for the stomach and advised me to follow up with heart doctor.Then we went to a heart doctor and he did another ECG and echo for her heart and advised us to get a CT image of her heart, so that he can decide and give opinion. We did not go for CT image until now and went to another doctor. He made another ECG and once he saw the ECG he was surprised and said that the ECG belongs to women of age 60 years old and not 32 years old. He requested blood test, gastroscopy, exercise ECG and prescribed Concor tablets 2.5 mg.Please advise me what is the problem with my wife\\s ECG? And what shall I do next? Shall I go with CT image or exercise ECG? Is it fine to take Concor tablets? By the way my wife age is 32 years old and we have four children of age 12, 9, 6 and 4 years. This is the first time my wife complaints of pain and now she is feeling better and doing her household works normally. Also, she does not have diabetes or blood pressure. Her weight is 63 kg, which is correct for her height. Please assist and advise me.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08208955223880597,
+      "trigger": {
+        "A": 0.875,
+        "B_k10_t0.7": 0.6484375,
+        "B_k20_t0.9": 0.34375
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hi doctor,I was just wondering how long germs would live on in a liquid lipstick? Around five weeks ago I had a vomiting bug, most likely gastro. I went out on Saturday night and wore a liquid lipstick, and was sick on Sunday. Will these germs still be living in the liquid lipstick and make me sick again or will they have died. Also, if I shared my liquid lipstick with someone who potentially had a cold sore, I am not sure if they get them or not, would those germs live in the liquid lipstick?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12142857142857143,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.7578125,
+        "B_k20_t0.9": 0.3359375
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I am an 18-year-old male and I am trying to find out if there is any way to lower my hairline. I had a big forehead since birth and I am wondering if there is any way to change that.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.22110552763819097,
+      "trigger": {
+        "A": 0.921875,
+        "B_k10_t0.7": 0.7109375,
+        "B_k20_t0.9": 0.34375
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "Hello doctor,I want to buy some equipment or medial device to prevent snoring during sleep. It should be safe and be able to buy online, preferably FDA approved.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09815950920245399,
+      "trigger": {
+        "A": 0.859375,
+        "B_k10_t0.7": 0.78125,
+        "B_k20_t0.9": 0.453125
+      }
+    },
+    {
+      "temperature": 0.3,
+      "query": "What are the possibilities of transmitting HSV2 from an infected woman to a man and how to prevent it if they intend to enter into a relationship. Thanks",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09865470852017938,
+      "trigger": {
+        "A": 0.921875,
+        "B_k10_t0.7": 0.7734375,
+        "B_k20_t0.9": 0.546875
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,I am a 28 year old unmarried woman. Last month my period was irregular. I got my periods on the 30th of last month and it was already 20 days later from the actual due. Initially, I had spotting for five days, then I bled for seven days and again, had spotting for three days. Now, I am bleeding again from today on the 27th of this month. Please help me out. My height is 155 cm and weight is 63 kg. I have this complaint once since last month. Normally, my periods will occur in an interval on 40 to 45 days. This is the first time I am experiencing spotting, bleeding and delay. Is this a serious problem?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12121212121212122,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.6328125,
+        "B_k20_t0.9": 0.2578125
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,So I never had acne on the back, maybe one or two single, but after visiting this massage center, which I know was a big mistake, my lower back is full of acne. I tried a couple of ointments, did not work. Cortisone helped a little, but not really. I think I need oral back up, any suggestions?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08571428571428572,
+      "trigger": {
+        "A": 0.8359375,
+        "B_k10_t0.7": 0.578125,
+        "B_k20_t0.9": 0.2578125
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I want to lose my weight. I am very obsessed. I want to get slim. Please tell me some exercises to lose weight. Please tell me exercises that I can do anywhere without any types of equipment.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12048192771084339,
+      "trigger": {
+        "A": 0.96875,
+        "B_k10_t0.7": 0.765625,
+        "B_k20_t0.9": 0.5078125
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I am an 18 year old male. My weight 46 Kg.I have been masturbating since 2010 till now.But now, I have been facing problems like premature ejaculation, nightfall, other problems like loss of appetite, weakness and poor memory. I ejaculate 3 times within 1 hour. I also watch porn videos. There is a swelling in my penis. I have attached pictures of the same.But I have no pain. Sometimes I have a burning sensation.My testicles start paining after 20 minutes of ejaculation and the pain goes away after 2 to 3 hours.And I do not feel hungry after masturbation.Is there anything wrong?I want to quit masturbation. So please guide me quit this forever.",
+      "n_documents": 10,
+      "n_steps": 47,
+      "rouge_l": 0.14893617021276595,
+      "trigger": {
+        "A": 0.8723404255319149,
+        "B_k10_t0.7": 0.6382978723404256,
+        "B_k20_t0.9": 0.2553191489361702
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,I am facing hair loss problem for the past three years. I am a male, 25 years old, 5.4 inches height and 71 kg weight. My hair volume becomes very less. Please help.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.13698630136986303,
+      "trigger": {
+        "A": 0.8671875,
+        "B_k10_t0.7": 0.5625,
+        "B_k20_t0.9": 0.2890625
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,What are the causes of pain in the first metatarsal that radiate to the entire forefoot?",
+      "n_documents": 1,
+      "n_steps": 128,
+      "rouge_l": 0.08928571428571429,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.609375,
+        "B_k20_t0.9": 0.3203125
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,I am a 24 year old female. I am in a relationship since three years. I am not treated with the same love and dignity by the person. In this duration of our relationship, he left me twice for two months without communication, and he used to text when he needed anything. It is always me, who has to give and make efforts. Whereas on the other end, he seems happy, and he does not bother nor miss me till he wants to have fun or money. He often treats me as an option. If I call, he gets irritated, and if I message, he just ignores them. I think it is time to put a stop to this. He does not give any commitment. He often says that some day our paths will be different. He wants materialistic things from me, rather than wanting me.Whenever I talk about marriage, he says that his family will not support us. Still, he wants to keep a relationship with me. I have left my close ones, and I have changed my personality for him. He was good before, but now I do not recognize him. I feel like a beggar, who begs for his time. I know that I am holding on to someone whose does not even care about me, but I am unable to get over it. I tried to divert myself with my hobbies and interests. I left my job, and now I do not have money. And he is earning well now. All this frustration is ruining me. I have insomnia, and I cannot sleep at nights. I have got hypothyroidism. This lonely feeling is eating me. I have many things to do, but I am not able to work on anything. Though I train myself to be strong, ultimately I land up getting fooled by his messages or the thought of seeing him with somebody else. But, I cannot take this kind of behavior from him. Please help.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11042944785276074,
+      "trigger": {
+        "A": 0.9609375,
+        "B_k10_t0.7": 0.8671875,
+        "B_k20_t0.9": 0.546875
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I did not realize my surgery would be so soon. I have been taking Ashwagandha and an Omega 3 supplement. I am having an enlarged lymph node removed in my neck under general anesthesia as an outpatient procedure. Will it be safe to undergo this procedure under anesthesia in a few days? I heard this might interfere with the effectiveness of the anesthesia.",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.09523809523809523,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I am married for ten months. I had a miscarriage of 10 weeks baby. Now again, I expect five weeks of pregnancy. At my first miscarriage checkup, the doctor said that I have a fibroid of 3.2 cm within the uterus at the intermural side. Also, at that time, my TORCH test was positive. T and R were positive, and I took medicines. Will I have a safe pregnancy this time? What can I do? Please suggest.",
+      "n_documents": 10,
+      "n_steps": 23,
+      "rouge_l": 0.05988023952095809,
+      "trigger": {
+        "A": 0.8695652173913043,
+        "B_k10_t0.7": 0.7391304347826086,
+        "B_k20_t0.9": 0.21739130434782608
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi,I am approaching you since I am concerned about a situation regarding which I am very embarrassed. I am a 43 year old female. I am normally healthy. I am 178cm tall and I weigh 75kg. Around 9-12 months ago, I started to suffer from anal itching.It is rather intense at night, after passing stools and during/after having intercourse or anal masturbation.I also have few lumps on my anal ring that seem to grow outside of my anal opening as an extended piece of flesh.They are very sensitive but they are odd and it really troubles me.I fear that my problem started as a result of anal masturbation and anal sex.I feel very ashamed to say this. I was using anal toys and hand and I am afraid that during these years I myself  have created problems to my health and I do not know how to fix it.I do not have constipation and my stool is normal.I pass motion once a day and I have no abdominal pain while passing stools.Sometimes when I have anal sex I start bleeding from my rectum for a few seconds and then it stops.It does not bleed when I pass stools or any other time.I have not attained menopause even though my period seems to be every 6-7 weeks these days.I would appreciate if you can help me understand how to treat this issue and what should I do (i.e, special diet, special creams, instructions on how to clean the area etc.)Help me please, I am looking for a very discreet way to handle my situation since I am too concerned about talking with my spouse.",
+      "n_documents": 10,
+      "n_steps": 61,
+      "rouge_l": 0.12389380530973453,
+      "trigger": {
+        "A": 0.9180327868852459,
+        "B_k10_t0.7": 0.7540983606557377,
+        "B_k20_t0.9": 0.3770491803278688
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,My eyes get watery when I talk to people or when I am nervous. Why is that happening?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08860759493670886,
+      "trigger": {
+        "A": 0.953125,
+        "B_k10_t0.7": 0.6953125,
+        "B_k20_t0.9": 0.3515625
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I have had a sharp pain in my tailbone area when I am sitting or standing up. This has been going on for several months and has not improved. I recently saw a doctor. He diagnosed it as a curve in my lumbar and suggested I see a chiropractor here. Is there anything else I could do to fix this problem?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10833333333333334,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.671875,
+        "B_k20_t0.9": 0.2734375
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I went to the doctor for a physical on 8th. I had blood work done. I went to the ER recently because I was feeling dizzy and tingling. The doctor said I have vertigo and they were not sure of the tingling. I received my blood work from my ER visit and I compared it to my annual exam. Below are the results:Between 8th and now:RBC 5.13 5.35HGB 16.1 16.7HCT 48.5 48.5MCH 31.5 31.2NA 131 141CL 105 97Protein 8.3 8.9SGOT 41 23All other numbers were normal. Do I need to be concerned with these numbers? After my 8th appt, the doctor did prescribe 20 mg of Lipitor (generic), but I stopped taking it after two weeks. I have also had diarrhea. I currently take Synthroid 0.05 mg. My blood pressure was high at my 8th appointment. It had never been high before.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11180124223602485,
+      "trigger": {
+        "A": 0.921875,
+        "B_k10_t0.7": 0.7734375,
+        "B_k20_t0.9": 0.484375
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,I had genital warts last year, which has been treated. I got Pap smear, HIV, VDRL, and HSV tests, and all tests were non-reactive. I have white vaginal discharge, which is more than normal. The discharge is not smelly, and I do not have any itching. I have done an antibiotic course also, but this it is not improving. Please help. What is wrong with me?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08450704225352113,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.578125,
+        "B_k20_t0.9": 0.21875
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I got a cavity last year. I have left it untreated. It hurt really bad a year ago and stopped, but is not occurring again. I have not gone to the dentist because I do not want to make my parents spend the money. So, I have just been dealing with it. But it hurts really bad. Is there anything I can do?",
+      "n_documents": 10,
+      "n_steps": 61,
+      "rouge_l": 0.10126582278481011,
+      "trigger": {
+        "A": 0.7704918032786885,
+        "B_k10_t0.7": 0.639344262295082,
+        "B_k20_t0.9": 0.19672131147540983
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,My daughter just had a tooth surgery and bleeding is not stopping. Is it normal? Three hours before only she had it.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.13157894736842105,
+      "trigger": {
+        "A": 0.8828125,
+        "B_k10_t0.7": 0.5546875,
+        "B_k20_t0.9": 0.2109375
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,I have right shoulder and posterior scapula pain. The pain began a few years ago when a huge dog suddenly tried to run while I was holding his leash, resulting in my arm being pulled. A year after that, I fell on rocks and landed with a right outstretched hand. Now, my right shoulder is lower than the left and winged scapula. My x-rays are normal. I have attached my MRI. Do you notice any abnormalities in my right shoulder MRI?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1142857142857143,
+      "trigger": {
+        "A": 0.84375,
+        "B_k10_t0.7": 0.578125,
+        "B_k20_t0.9": 0.21875
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I am suffering from epididymitis problem. Sometimes I am having pain in testis while having a gastric issue as well. Kindly help me to get rid of this",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12048192771084336,
+      "trigger": {
+        "A": 0.7890625,
+        "B_k10_t0.7": 0.484375,
+        "B_k20_t0.9": 0.2109375
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor, My baby is 5 months old. I have given vaccine to her on 18th of this month, since then she was having fever every four hours the other day too. After that she is not drinking breastmilk and formula too. Now only drinks at night time while sleeping. What should I do?",
+      "n_documents": 10,
+      "n_steps": 56,
+      "rouge_l": 0.128,
+      "trigger": {
+        "A": 0.8571428571428571,
+        "B_k10_t0.7": 0.39285714285714285,
+        "B_k20_t0.9": 0.10714285714285714
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi,My hands are extremely rough since childhood. I am 17 years old now. I have tried almost everything to get rid of this problem. I also have so many lines on my palm and fingers. Suggest me some treatment.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08,
+      "trigger": {
+        "A": 0.859375,
+        "B_k10_t0.7": 0.6640625,
+        "B_k20_t0.9": 0.3984375
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I am 33 years old. I have been trying to conceive for eight months from now. I have monthly periods and positive OPKs and BBT shifts, but periods are also very light, basically spotting. I had an Ultrasound which showed a few cysts, had mildly elevated testosterone, normal LH and FSH, normal estrogen, low progesterone. My PCP is not convinced. I have PCOS but I am wondering if that is still a possibility and what I should anticipate for treatment in the future (clomid vs. progesterone therapy, etc.)?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09022556390977444,
+      "trigger": {
+        "A": 0.921875,
+        "B_k10_t0.7": 0.703125,
+        "B_k20_t0.9": 0.21875
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,My mother is 62 years old. She has purple-like patches on her arms and legs as shown in the attached picture. She said that she has it for over three to four years and these patches fade in a few days once they appear. My mother also has diabetes and hypertension. She is using some antibiotics for diabetes and hypertension. She also has substernal goiter and her biopsy was negative. I am attaching her blood and hormone results, which are in the normal range. Liver function tests were also normal. What are these fading purple-like patches?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10322580645161292,
+      "trigger": {
+        "A": 0.8828125,
+        "B_k10_t0.7": 0.6875,
+        "B_k20_t0.9": 0.28125
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I get pain when my husband inserts, but I am not sure it is because of fear or physical pain. I contract my muscles and thighs, and he is not able to do it. We are not having proper sexual intercourse. I get highly wet too but contract myself when he inserts. Please help. I feel it is more of mental blockage.",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.12244897959183673,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,I have read that drinking alcohol affects the HIV test results. Does increased alcohol intake delay seroconversion time? If so, then how long one should wait? Three or six months? For such cases, can we take HIV DNA PCR as a screening test? Whether this test is also affected by much more alcohol intake or not. How reliable is this test? I had oral sex around three years back, and I consume 150 ml alcohol regularly. For such a person, what HIV screening is recommended? For late seroconversion, which test is taken to find out HIV infection? Please explain in detail, as I am obsessed with HIV. Thanks.",
+      "n_documents": 0,
+      "n_steps": 32,
+      "rouge_l": 0.10526315789473685,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,My wife is suffering from peripartum cardiomyopathy for the past six months. She is taking beta blockers and diuretic medicine for the past four months. Her heart EF is 38 % with flat T in ECG reports. Her heart function is normal. How many days does it take to get cured?",
+      "n_documents": 10,
+      "n_steps": 39,
+      "rouge_l": 0.05454545454545455,
+      "trigger": {
+        "A": 0.9487179487179487,
+        "B_k10_t0.7": 0.7948717948717948,
+        "B_k20_t0.9": 0.20512820512820512
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,Recently, I did a full blood workup, and my eosinophil count, WBC, and B12 levels are high. I am a chronic sufferer of pouchitis. My creatinine and Bun levels are normal, like all other levels. I often take many supplements daily. Can you please help me? I am scared.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12307692307692307,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.6796875,
+        "B_k20_t0.9": 0.2734375
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,My husband and I have been in a monogamous relationship (I believe) for 14 years. We had sexual partners before this. A few weeks into my first pregnancy, he and I have just broken out into HPV genital warts. Is it possible for warts to appear 14 years later? Is it more probable that my partner has been unfaithful?",
+      "n_documents": 10,
+      "n_steps": 40,
+      "rouge_l": 0.10909090909090909,
+      "trigger": {
+        "A": 0.85,
+        "B_k10_t0.7": 0.5,
+        "B_k20_t0.9": 0.15
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I am 27 years old and going to get married after three months. I am facing premature ejaculation. I have a bad dream after two or three days regular basis. So fearing about marriage as I have this problem. Semen maybe not thick enough and ejaculate after only 12 to 15 strokes. Need valuable suggestions from your end.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10416666666666667,
+      "trigger": {
+        "A": 0.84375,
+        "B_k10_t0.7": 0.5859375,
+        "B_k20_t0.9": 0.203125
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I am 23 years old. I am obese and have a family history of cardiac arrest. My father got cardiac arrest at the age of 53. I have consulted the local cardiologist and gone through ECG, echo, TMT, lipid, hs-CRP and other blood tests. All the tests were normal except heart rate, which was 110 and also high BP. I am taking Rosufit 10, Nebistar 5 and Cilaheart 10. Currently, I am feeling warm in the left side of my chest for a short span of time. Sometimes, I have slight pain in my left hand and feels like a pinch type of pain in the center of the chest when I inhale and exhale. Is it normal?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.14166666666666666,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.6640625,
+        "B_k20_t0.9": 0.3515625
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,Is fibrous dysplasia a life-threatening disease or just a cosmetic problem in the upper mouth? Can CT scan show the overgrowth of bone in the upper mouth?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12121212121212122,
+      "trigger": {
+        "A": 0.9296875,
+        "B_k10_t0.7": 0.7890625,
+        "B_k20_t0.9": 0.3046875
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,The length of my penis is 5 and 1/2 inches and I am 38 years old. How can I increase my penis length? Is there any medicine, cream, lotion, oil or gel?",
+      "n_documents": 10,
+      "n_steps": 36,
+      "rouge_l": 0.08333333333333333,
+      "trigger": {
+        "A": 0.9166666666666666,
+        "B_k10_t0.7": 0.6388888888888888,
+        "B_k20_t0.9": 0.2222222222222222
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,I am 30 years old. I have completed my marriage life for three years. I have no children. I have PCOD and thyroid. I have a prolactin level of 53 ng/mL. I am taking Metformin 500 mg. I am taking Caberlin 0.25 mg weekly once. I have severe hair loss. Can I take Kalarchikai choornam along with this medication?",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.10650887573964497,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,My period is late by 21 days late. I got all the pregnancy tests done, but everything came back negative. I have lower left side pain, feel bloated on that side, back pain, and abdomen pain. I am 18 years old and weigh 170 lbs.",
+      "n_documents": 10,
+      "n_steps": 42,
+      "rouge_l": 0.10752688172043011,
+      "trigger": {
+        "A": 0.9285714285714286,
+        "B_k10_t0.7": 0.47619047619047616,
+        "B_k20_t0.9": 0.11904761904761904
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I feel terrible before periods and I cannot sleep. My tummy comes out, also my breast become heavy, and I feel no hunger at all. My periods are regular but I am just tired of this thing happening to me even though my lifestyle is good. I am a vegan. Please help me. I want to cure it naturally.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12030075187969924,
+      "trigger": {
+        "A": 0.9140625,
+        "B_k10_t0.7": 0.6953125,
+        "B_k20_t0.9": 0.3828125
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,I have an STD question and hope to have an STD specialist doctor to assist me. I had a sexual contact three years ago and only last month I went for (VDRL nontreponemal test) and is negative. I have read online that after several years or after sometime usually, the result can be negative even if a person had syphilis before. I am afraid it might be a false negative since it was a few years ago. May I know should I test for Treponemal test such as TPPA or FTA-ABS to rule out the false negative by VDRL after three years test, I worry it might false negative by VDRL? The negative VDRL test was one month ago and possible exposure was three years ago. Does this mean the person does not have active syphilis infection? Does this also mean it would not proceed to latent or tertiary syphilis that will damage the body such as paralysis, numbness, gradual blindness and dementia?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.07246376811594203,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.8046875,
+        "B_k20_t0.9": 0.453125
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Dear Doctor,I have taken Harmoni F for the past three months. Now I stopped taking it and planning for a baby.When will I get pregnant?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09655172413793102,
+      "trigger": {
+        "A": 0.8203125,
+        "B_k10_t0.7": 0.6796875,
+        "B_k20_t0.9": 0.3359375
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I am 60 years old. I am a Parkinson\\s patient. For about the last six months I am having pain in the left arm, shoulder and right leg from thighs downward.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1456953642384106,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.65625,
+        "B_k20_t0.9": 0.359375
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,Since last 7 to 8 months I am having an eye infection, like a stye. It is getting frequent almost after every 3 to 4 weeks. I recollect having collided with somebody about one and half years back, hurt on my right eye with somebody\\s elbow and had a swollen eye, very painful and under the eye, it is red and swollen. After about 4 to 5 days, it started healing, and gradually I forgot about it. Now with this frequent infection in the same eye after every 3 to 4 weeks which lasts 3 to 5 days, sometimes pus and little blood come out and sometimes it heals without any pus coming out. This time it started with an itch and has gradually swollen and is very itchy and painful and red and swollen inside and outside the eye.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08805031446540881,
+      "trigger": {
+        "A": 0.9296875,
+        "B_k10_t0.7": 0.71875,
+        "B_k20_t0.9": 0.4375
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,I just had an EGD with biopsy, polypectomy. It showed a hianal hernia 2 cm. I am attaching photos. The doctor took biopsies, said no cancer. I have had breast cancer in the past. I am having pain in the chest when I swallow, and sternum today. Will that subside? Is it from the bleeding? And, can you recommend the best pill to take for this pain, taking Pantoprazole now? And what should I take for this problem, what should I eat? (Can you assure there is no cancer)?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10204081632653061,
+      "trigger": {
+        "A": 0.875,
+        "B_k10_t0.7": 0.6015625,
+        "B_k20_t0.9": 0.2890625
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,My son is 1 and a half years old. A few months ago we came to know that his Hb is 4.3 and Hb F is 92 percent and that he has beta thalassemia intermedia. He was immediately transfused once. Now he is taking vitamin C, and Hydroxy and Folic acid and his Hb are 10.2. Please suggest some diet for him to maintain his health.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10256410256410256,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.65625,
+        "B_k20_t0.9": 0.3359375
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I have had a sore throat on and off, for the past few weeks. It is not severe, but more of an annoyance with some referred ear pain. This week, I had a family member, who is a nurse, look at my throat to see if it was red or irritated. She noted I had quite a bit of post-nasal drip, but she could see no other issues. I had my tonsils removed as a kid, so they definitely are not the issue. I was thinking this might be caused by allergies, the trees and plants around are starting to bloom. I started taking some Claritin on top of painkillers, earlier this week. I also have been gargling with salt water. Those things seemed to help for a day or two, and the issue seemed to go away.Fast forward to last night, I woke up in the middle of the night with a burning pain in my stomach. This morning the burning pain keeps coming and going, and I can feel a lot of mucus dripping down the back of my throat. Is a burning stomach usually something that can be linked to post-nasal drip? I have never had an issue with acid reflux, so I do not think it is that. Also, the burning sensation is limited only to my lower abdomen.I typically do not have issues with severe allergies, so I am wondering if this could be caused by a virus? To be honest, I do not have a lot of confidence in my local doctor\\s office, and they tend to order a bunch of tests then overcharge for them. So I am wondering if I can get away with not seeing a doctor. I have ordered an air purifier for my room, and I am taking the allergy medicines religiously. Is there something else I can take or use to alleviate these symptoms? Or should I suck it up and see a doctor? I will also add that with these symptoms, I have had little to no nasal congestion or coughing. Thanks.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09923664122137406,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.8046875,
+        "B_k20_t0.9": 0.4140625
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I had a white bump on my penis for the past three months. It did not cause any pain when I touched it, and when I tried to remove it in the shower, it did not budge. It is single and there was nothing else resembling it that showed up on my penis. It showed up maybe a day or two after sexual contact with my girlfriend. I am not sure if it is an STD.Today, during the shower I realized it was not there anymore. It either fell off or shrank, I have not been paying much attention to it the last couple days so I am not really sure. I am attaching a picture of what it looked like when I had it, and what it looks like now. It does not look like any STDs I have seen online, so I am at a loss as to what it could have been. Any help would be appreciated.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.13471502590673579,
+      "trigger": {
+        "A": 0.84375,
+        "B_k10_t0.7": 0.546875,
+        "B_k20_t0.9": 0.1953125
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,My urine is foamy. I am confused whether everyone will get bubble and foamy urine while urinating. Please explain me.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.15294117647058825,
+      "trigger": {
+        "A": 0.921875,
+        "B_k10_t0.7": 0.7578125,
+        "B_k20_t0.9": 0.3828125
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "for piles , am using himalaya tablets .daily 2 tablets...but cant able sit properly due to anal itching ......please give me a medicine",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10362694300518135,
+      "trigger": {
+        "A": 0.8671875,
+        "B_k10_t0.7": 0.6484375,
+        "B_k20_t0.9": 0.2890625
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I am 35 years old. About three hours ago, I was fleaing my dogs when I got a tiny bit of the flea killer in my mouth and on my lip. It was not alot. Will it harm me?",
+      "n_documents": 10,
+      "n_steps": 46,
+      "rouge_l": 0.11214953271028036,
+      "trigger": {
+        "A": 0.9130434782608695,
+        "B_k10_t0.7": 0.3695652173913043,
+        "B_k20_t0.9": 0.043478260869565216
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,I want to explain my wife\\s situation and I need your help and assistance. When my wife was in the kitchen, suddenly she felt some pain and heat in the upper part of her stomach and felt all her body become hot. I took her to the hospital, in the emergency department her pressure was 110/70 mmHg and the doctor requested ECG.The doctor showed some kind of worry in respect to the ECG, made some mark in the ECG and requested for a blood test. After four hours he repeated the blood test and the ECG and then he discharged her from the hospital and gave her some medicine for the stomach and advised me to follow up with heart doctor.Then we went to a heart doctor and he did another ECG and echo for her heart and advised us to get a CT image of her heart, so that he can decide and give opinion. We did not go for CT image until now and went to another doctor. He made another ECG and once he saw the ECG he was surprised and said that the ECG belongs to women of age 60 years old and not 32 years old. He requested blood test, gastroscopy, exercise ECG and prescribed Concor tablets 2.5 mg.Please advise me what is the problem with my wife\\s ECG? And what shall I do next? Shall I go with CT image or exercise ECG? Is it fine to take Concor tablets? By the way my wife age is 32 years old and we have four children of age 12, 9, 6 and 4 years. This is the first time my wife complaints of pain and now she is feeling better and doing her household works normally. Also, she does not have diabetes or blood pressure. Her weight is 63 kg, which is correct for her height. Please assist and advise me.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10909090909090909,
+      "trigger": {
+        "A": 0.875,
+        "B_k10_t0.7": 0.625,
+        "B_k20_t0.9": 0.3203125
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hi doctor,I was just wondering how long germs would live on in a liquid lipstick? Around five weeks ago I had a vomiting bug, most likely gastro. I went out on Saturday night and wore a liquid lipstick, and was sick on Sunday. Will these germs still be living in the liquid lipstick and make me sick again or will they have died. Also, if I shared my liquid lipstick with someone who potentially had a cold sore, I am not sure if they get them or not, would those germs live in the liquid lipstick?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.14084507042253522,
+      "trigger": {
+        "A": 0.84375,
+        "B_k10_t0.7": 0.7578125,
+        "B_k20_t0.9": 0.4765625
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I am an 18-year-old male and I am trying to find out if there is any way to lower my hairline. I had a big forehead since birth and I am wondering if there is any way to change that.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1568627450980392,
+      "trigger": {
+        "A": 0.9375,
+        "B_k10_t0.7": 0.75,
+        "B_k20_t0.9": 0.5
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "Hello doctor,I want to buy some equipment or medial device to prevent snoring during sleep. It should be safe and be able to buy online, preferably FDA approved.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11320754716981132,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.71875,
+        "B_k20_t0.9": 0.5
+      }
+    },
+    {
+      "temperature": 0.5,
+      "query": "What are the possibilities of transmitting HSV2 from an infected woman to a man and how to prevent it if they intend to enter into a relationship. Thanks",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10666666666666666,
+      "trigger": {
+        "A": 0.9765625,
+        "B_k10_t0.7": 0.78125,
+        "B_k20_t0.9": 0.5078125
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,I am a 28 year old unmarried woman. Last month my period was irregular. I got my periods on the 30th of last month and it was already 20 days later from the actual due. Initially, I had spotting for five days, then I bled for seven days and again, had spotting for three days. Now, I am bleeding again from today on the 27th of this month. Please help me out. My height is 155 cm and weight is 63 kg. I have this complaint once since last month. Normally, my periods will occur in an interval on 40 to 45 days. This is the first time I am experiencing spotting, bleeding and delay. Is this a serious problem?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.07253886010362692,
+      "trigger": {
+        "A": 0.796875,
+        "B_k10_t0.7": 0.578125,
+        "B_k20_t0.9": 0.203125
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,So I never had acne on the back, maybe one or two single, but after visiting this massage center, which I know was a big mistake, my lower back is full of acne. I tried a couple of ointments, did not work. Cortisone helped a little, but not really. I think I need oral back up, any suggestions?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08510638297872342,
+      "trigger": {
+        "A": 0.859375,
+        "B_k10_t0.7": 0.53125,
+        "B_k20_t0.9": 0.2109375
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I want to lose my weight. I am very obsessed. I want to get slim. Please tell me some exercises to lose weight. Please tell me exercises that I can do anywhere without any types of equipment.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10596026490066225,
+      "trigger": {
+        "A": 0.9296875,
+        "B_k10_t0.7": 0.7578125,
+        "B_k20_t0.9": 0.5625
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I am an 18 year old male. My weight 46 Kg.I have been masturbating since 2010 till now.But now, I have been facing problems like premature ejaculation, nightfall, other problems like loss of appetite, weakness and poor memory. I ejaculate 3 times within 1 hour. I also watch porn videos. There is a swelling in my penis. I have attached pictures of the same.But I have no pain. Sometimes I have a burning sensation.My testicles start paining after 20 minutes of ejaculation and the pain goes away after 2 to 3 hours.And I do not feel hungry after masturbation.Is there anything wrong?I want to quit masturbation. So please guide me quit this forever.",
+      "n_documents": 10,
+      "n_steps": 52,
+      "rouge_l": 0.20408163265306123,
+      "trigger": {
+        "A": 0.8076923076923077,
+        "B_k10_t0.7": 0.7115384615384616,
+        "B_k20_t0.9": 0.36538461538461536
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,I am facing hair loss problem for the past three years. I am a male, 25 years old, 5.4 inches height and 71 kg weight. My hair volume becomes very less. Please help.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.15686274509803924,
+      "trigger": {
+        "A": 0.875,
+        "B_k10_t0.7": 0.625,
+        "B_k20_t0.9": 0.1875
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,What are the causes of pain in the first metatarsal that radiate to the entire forefoot?",
+      "n_documents": 1,
+      "n_steps": 128,
+      "rouge_l": 0.06956521739130435,
+      "trigger": {
+        "A": 0.9375,
+        "B_k10_t0.7": 0.65625,
+        "B_k20_t0.9": 0.390625
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,I am a 24 year old female. I am in a relationship since three years. I am not treated with the same love and dignity by the person. In this duration of our relationship, he left me twice for two months without communication, and he used to text when he needed anything. It is always me, who has to give and make efforts. Whereas on the other end, he seems happy, and he does not bother nor miss me till he wants to have fun or money. He often treats me as an option. If I call, he gets irritated, and if I message, he just ignores them. I think it is time to put a stop to this. He does not give any commitment. He often says that some day our paths will be different. He wants materialistic things from me, rather than wanting me.Whenever I talk about marriage, he says that his family will not support us. Still, he wants to keep a relationship with me. I have left my close ones, and I have changed my personality for him. He was good before, but now I do not recognize him. I feel like a beggar, who begs for his time. I know that I am holding on to someone whose does not even care about me, but I am unable to get over it. I tried to divert myself with my hobbies and interests. I left my job, and now I do not have money. And he is earning well now. All this frustration is ruining me. I have insomnia, and I cannot sleep at nights. I have got hypothyroidism. This lonely feeling is eating me. I have many things to do, but I am not able to work on anything. Though I train myself to be strong, ultimately I land up getting fooled by his messages or the thought of seeing him with somebody else. But, I cannot take this kind of behavior from him. Please help.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.15853658536585363,
+      "trigger": {
+        "A": 0.953125,
+        "B_k10_t0.7": 0.828125,
+        "B_k20_t0.9": 0.578125
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I did not realize my surgery would be so soon. I have been taking Ashwagandha and an Omega 3 supplement. I am having an enlarged lymph node removed in my neck under general anesthesia as an outpatient procedure. Will it be safe to undergo this procedure under anesthesia in a few days? I heard this might interfere with the effectiveness of the anesthesia.",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.1208053691275168,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I am married for ten months. I had a miscarriage of 10 weeks baby. Now again, I expect five weeks of pregnancy. At my first miscarriage checkup, the doctor said that I have a fibroid of 3.2 cm within the uterus at the intermural side. Also, at that time, my TORCH test was positive. T and R were positive, and I took medicines. Will I have a safe pregnancy this time? What can I do? Please suggest.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.13991769547325103,
+      "trigger": {
+        "A": 0.8359375,
+        "B_k10_t0.7": 0.5078125,
+        "B_k20_t0.9": 0.203125
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi,I am approaching you since I am concerned about a situation regarding which I am very embarrassed. I am a 43 year old female. I am normally healthy. I am 178cm tall and I weigh 75kg. Around 9-12 months ago, I started to suffer from anal itching.It is rather intense at night, after passing stools and during/after having intercourse or anal masturbation.I also have few lumps on my anal ring that seem to grow outside of my anal opening as an extended piece of flesh.They are very sensitive but they are odd and it really troubles me.I fear that my problem started as a result of anal masturbation and anal sex.I feel very ashamed to say this. I was using anal toys and hand and I am afraid that during these years I myself  have created problems to my health and I do not know how to fix it.I do not have constipation and my stool is normal.I pass motion once a day and I have no abdominal pain while passing stools.Sometimes when I have anal sex I start bleeding from my rectum for a few seconds and then it stops.It does not bleed when I pass stools or any other time.I have not attained menopause even though my period seems to be every 6-7 weeks these days.I would appreciate if you can help me understand how to treat this issue and what should I do (i.e, special diet, special creams, instructions on how to clean the area etc.)Help me please, I am looking for a very discreet way to handle my situation since I am too concerned about talking with my spouse.",
+      "n_documents": 10,
+      "n_steps": 26,
+      "rouge_l": 0.04651162790697674,
+      "trigger": {
+        "A": 0.8076923076923077,
+        "B_k10_t0.7": 0.8461538461538461,
+        "B_k20_t0.9": 0.38461538461538464
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,My eyes get watery when I talk to people or when I am nervous. Why is that happening?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11320754716981134,
+      "trigger": {
+        "A": 0.9140625,
+        "B_k10_t0.7": 0.6796875,
+        "B_k20_t0.9": 0.421875
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I have had a sharp pain in my tailbone area when I am sitting or standing up. This has been going on for several months and has not improved. I recently saw a doctor. He diagnosed it as a curve in my lumbar and suggested I see a chiropractor here. Is there anything else I could do to fix this problem?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1276595744680851,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.6484375,
+        "B_k20_t0.9": 0.2421875
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I went to the doctor for a physical on 8th. I had blood work done. I went to the ER recently because I was feeling dizzy and tingling. The doctor said I have vertigo and they were not sure of the tingling. I received my blood work from my ER visit and I compared it to my annual exam. Below are the results:Between 8th and now:RBC 5.13 5.35HGB 16.1 16.7HCT 48.5 48.5MCH 31.5 31.2NA 131 141CL 105 97Protein 8.3 8.9SGOT 41 23All other numbers were normal. Do I need to be concerned with these numbers? After my 8th appt, the doctor did prescribe 20 mg of Lipitor (generic), but I stopped taking it after two weeks. I have also had diarrhea. I currently take Synthroid 0.05 mg. My blood pressure was high at my 8th appointment. It had never been high before.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09032258064516129,
+      "trigger": {
+        "A": 0.9375,
+        "B_k10_t0.7": 0.7265625,
+        "B_k20_t0.9": 0.3125
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,I had genital warts last year, which has been treated. I got Pap smear, HIV, VDRL, and HSV tests, and all tests were non-reactive. I have white vaginal discharge, which is more than normal. The discharge is not smelly, and I do not have any itching. I have done an antibiotic course also, but this it is not improving. Please help. What is wrong with me?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.06993006993006994,
+      "trigger": {
+        "A": 0.9296875,
+        "B_k10_t0.7": 0.625,
+        "B_k20_t0.9": 0.265625
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I got a cavity last year. I have left it untreated. It hurt really bad a year ago and stopped, but is not occurring again. I have not gone to the dentist because I do not want to make my parents spend the money. So, I have just been dealing with it. But it hurts really bad. Is there anything I can do?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10232558139534882,
+      "trigger": {
+        "A": 0.8203125,
+        "B_k10_t0.7": 0.578125,
+        "B_k20_t0.9": 0.2109375
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,My daughter just had a tooth surgery and bleeding is not stopping. Is it normal? Three hours before only she had it.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.14473684210526316,
+      "trigger": {
+        "A": 0.8671875,
+        "B_k10_t0.7": 0.6484375,
+        "B_k20_t0.9": 0.234375
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,I have right shoulder and posterior scapula pain. The pain began a few years ago when a huge dog suddenly tried to run while I was holding his leash, resulting in my arm being pulled. A year after that, I fell on rocks and landed with a right outstretched hand. Now, my right shoulder is lower than the left and winged scapula. My x-rays are normal. I have attached my MRI. Do you notice any abnormalities in my right shoulder MRI?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.13432835820895522,
+      "trigger": {
+        "A": 0.859375,
+        "B_k10_t0.7": 0.625,
+        "B_k20_t0.9": 0.2421875
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I am suffering from epididymitis problem. Sometimes I am having pain in testis while having a gastric issue as well. Kindly help me to get rid of this",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12738853503184713,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.5546875,
+        "B_k20_t0.9": 0.234375
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor, My baby is 5 months old. I have given vaccine to her on 18th of this month, since then she was having fever every four hours the other day too. After that she is not drinking breastmilk and formula too. Now only drinks at night time while sleeping. What should I do?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.14857142857142858,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.703125,
+        "B_k20_t0.9": 0.25
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi,My hands are extremely rough since childhood. I am 17 years old now. I have tried almost everything to get rid of this problem. I also have so many lines on my palm and fingers. Suggest me some treatment.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.07692307692307693,
+      "trigger": {
+        "A": 0.859375,
+        "B_k10_t0.7": 0.65625,
+        "B_k20_t0.9": 0.28125
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I am 33 years old. I have been trying to conceive for eight months from now. I have monthly periods and positive OPKs and BBT shifts, but periods are also very light, basically spotting. I had an Ultrasound which showed a few cysts, had mildly elevated testosterone, normal LH and FSH, normal estrogen, low progesterone. My PCP is not convinced. I have PCOS but I am wondering if that is still a possibility and what I should anticipate for treatment in the future (clomid vs. progesterone therapy, etc.)?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.078125,
+      "trigger": {
+        "A": 0.9375,
+        "B_k10_t0.7": 0.6640625,
+        "B_k20_t0.9": 0.2109375
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,My mother is 62 years old. She has purple-like patches on her arms and legs as shown in the attached picture. She said that she has it for over three to four years and these patches fade in a few days once they appear. My mother also has diabetes and hypertension. She is using some antibiotics for diabetes and hypertension. She also has substernal goiter and her biopsy was negative. I am attaching her blood and hormone results, which are in the normal range. Liver function tests were also normal. What are these fading purple-like patches?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11510791366906475,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.609375,
+        "B_k20_t0.9": 0.265625
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I get pain when my husband inserts, but I am not sure it is because of fear or physical pain. I contract my muscles and thighs, and he is not able to do it. We are not having proper sexual intercourse. I get highly wet too but contract myself when he inserts. Please help. I feel it is more of mental blockage.",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.11458333333333333,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,I have read that drinking alcohol affects the HIV test results. Does increased alcohol intake delay seroconversion time? If so, then how long one should wait? Three or six months? For such cases, can we take HIV DNA PCR as a screening test? Whether this test is also affected by much more alcohol intake or not. How reliable is this test? I had oral sex around three years back, and I consume 150 ml alcohol regularly. For such a person, what HIV screening is recommended? For late seroconversion, which test is taken to find out HIV infection? Please explain in detail, as I am obsessed with HIV. Thanks.",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.03225806451612903,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,My wife is suffering from peripartum cardiomyopathy for the past six months. She is taking beta blockers and diuretic medicine for the past four months. Her heart EF is 38 % with flat T in ECG reports. Her heart function is normal. How many days does it take to get cured?",
+      "n_documents": 10,
+      "n_steps": 46,
+      "rouge_l": 0.05172413793103448,
+      "trigger": {
+        "A": 0.9347826086956522,
+        "B_k10_t0.7": 0.5434782608695652,
+        "B_k20_t0.9": 0.2826086956521739
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,Recently, I did a full blood workup, and my eosinophil count, WBC, and B12 levels are high. I am a chronic sufferer of pouchitis. My creatinine and Bun levels are normal, like all other levels. I often take many supplements daily. Can you please help me? I am scared.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1139896373056995,
+      "trigger": {
+        "A": 0.9140625,
+        "B_k10_t0.7": 0.734375,
+        "B_k20_t0.9": 0.359375
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,My husband and I have been in a monogamous relationship (I believe) for 14 years. We had sexual partners before this. A few weeks into my first pregnancy, he and I have just broken out into HPV genital warts. Is it possible for warts to appear 14 years later? Is it more probable that my partner has been unfaithful?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.152046783625731,
+      "trigger": {
+        "A": 0.828125,
+        "B_k10_t0.7": 0.7890625,
+        "B_k20_t0.9": 0.3515625
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I am 27 years old and going to get married after three months. I am facing premature ejaculation. I have a bad dream after two or three days regular basis. So fearing about marriage as I have this problem. Semen maybe not thick enough and ejaculate after only 12 to 15 strokes. Need valuable suggestions from your end.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10309278350515465,
+      "trigger": {
+        "A": 0.8359375,
+        "B_k10_t0.7": 0.640625,
+        "B_k20_t0.9": 0.2578125
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I am 23 years old. I am obese and have a family history of cardiac arrest. My father got cardiac arrest at the age of 53. I have consulted the local cardiologist and gone through ECG, echo, TMT, lipid, hs-CRP and other blood tests. All the tests were normal except heart rate, which was 110 and also high BP. I am taking Rosufit 10, Nebistar 5 and Cilaheart 10. Currently, I am feeling warm in the left side of my chest for a short span of time. Sometimes, I have slight pain in my left hand and feels like a pinch type of pain in the center of the chest when I inhale and exhale. Is it normal?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.13502109704641352,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.65625,
+        "B_k20_t0.9": 0.3046875
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,Is fibrous dysplasia a life-threatening disease or just a cosmetic problem in the upper mouth? Can CT scan show the overgrowth of bone in the upper mouth?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12941176470588234,
+      "trigger": {
+        "A": 0.8828125,
+        "B_k10_t0.7": 0.7265625,
+        "B_k20_t0.9": 0.3203125
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,The length of my penis is 5 and 1/2 inches and I am 38 years old. How can I increase my penis length? Is there any medicine, cream, lotion, oil or gel?",
+      "n_documents": 10,
+      "n_steps": 41,
+      "rouge_l": 0.0819672131147541,
+      "trigger": {
+        "A": 0.9024390243902439,
+        "B_k10_t0.7": 0.5365853658536586,
+        "B_k20_t0.9": 0.17073170731707318
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,I am 30 years old. I have completed my marriage life for three years. I have no children. I have PCOD and thyroid. I have a prolactin level of 53 ng/mL. I am taking Metformin 500 mg. I am taking Caberlin 0.25 mg weekly once. I have severe hair loss. Can I take Kalarchikai choornam along with this medication?",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.1477272727272727,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,My period is late by 21 days late. I got all the pregnancy tests done, but everything came back negative. I have lower left side pain, feel bloated on that side, back pain, and abdomen pain. I am 18 years old and weigh 170 lbs.",
+      "n_documents": 10,
+      "n_steps": 40,
+      "rouge_l": 0.08695652173913043,
+      "trigger": {
+        "A": 0.95,
+        "B_k10_t0.7": 0.4,
+        "B_k20_t0.9": 0.1
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I feel terrible before periods and I cannot sleep. My tummy comes out, also my breast become heavy, and I feel no hunger at all. My periods are regular but I am just tired of this thing happening to me even though my lifestyle is good. I am a vegan. Please help me. I want to cure it naturally.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.140625,
+      "trigger": {
+        "A": 0.875,
+        "B_k10_t0.7": 0.734375,
+        "B_k20_t0.9": 0.3828125
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,I have an STD question and hope to have an STD specialist doctor to assist me. I had a sexual contact three years ago and only last month I went for (VDRL nontreponemal test) and is negative. I have read online that after several years or after sometime usually, the result can be negative even if a person had syphilis before. I am afraid it might be a false negative since it was a few years ago. May I know should I test for Treponemal test such as TPPA or FTA-ABS to rule out the false negative by VDRL after three years test, I worry it might false negative by VDRL? The negative VDRL test was one month ago and possible exposure was three years ago. Does this mean the person does not have active syphilis infection? Does this also mean it would not proceed to latent or tertiary syphilis that will damage the body such as paralysis, numbness, gradual blindness and dementia?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.16541353383458646,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.71875,
+        "B_k20_t0.9": 0.3515625
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Dear Doctor,I have taken Harmoni F for the past three months. Now I stopped taking it and planning for a baby.When will I get pregnant?",
+      "n_documents": 10,
+      "n_steps": 31,
+      "rouge_l": 0.03389830508474576,
+      "trigger": {
+        "A": 0.7741935483870968,
+        "B_k10_t0.7": 0.5161290322580645,
+        "B_k20_t0.9": 0.12903225806451613
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I am 60 years old. I am a Parkinson\\s patient. For about the last six months I am having pain in the left arm, shoulder and right leg from thighs downward.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09271523178807947,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.65625,
+        "B_k20_t0.9": 0.296875
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,Since last 7 to 8 months I am having an eye infection, like a stye. It is getting frequent almost after every 3 to 4 weeks. I recollect having collided with somebody about one and half years back, hurt on my right eye with somebody\\s elbow and had a swollen eye, very painful and under the eye, it is red and swollen. After about 4 to 5 days, it started healing, and gradually I forgot about it. Now with this frequent infection in the same eye after every 3 to 4 weeks which lasts 3 to 5 days, sometimes pus and little blood come out and sometimes it heals without any pus coming out. This time it started with an itch and has gradually swollen and is very itchy and painful and red and swollen inside and outside the eye.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.0903225806451613,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.703125,
+        "B_k20_t0.9": 0.46875
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,I just had an EGD with biopsy, polypectomy. It showed a hianal hernia 2 cm. I am attaching photos. The doctor took biopsies, said no cancer. I have had breast cancer in the past. I am having pain in the chest when I swallow, and sternum today. Will that subside? Is it from the bleeding? And, can you recommend the best pill to take for this pain, taking Pantoprazole now? And what should I take for this problem, what should I eat? (Can you assure there is no cancer)?",
+      "n_documents": 10,
+      "n_steps": 51,
+      "rouge_l": 0.06756756756756756,
+      "trigger": {
+        "A": 0.8235294117647058,
+        "B_k10_t0.7": 0.5882352941176471,
+        "B_k20_t0.9": 0.17647058823529413
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,My son is 1 and a half years old. A few months ago we came to know that his Hb is 4.3 and Hb F is 92 percent and that he has beta thalassemia intermedia. He was immediately transfused once. Now he is taking vitamin C, and Hydroxy and Folic acid and his Hb are 10.2. Please suggest some diet for him to maintain his health.",
+      "n_documents": 10,
+      "n_steps": 33,
+      "rouge_l": 0.045112781954887216,
+      "trigger": {
+        "A": 0.8484848484848485,
+        "B_k10_t0.7": 0.42424242424242425,
+        "B_k20_t0.9": 0.12121212121212122
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I have had a sore throat on and off, for the past few weeks. It is not severe, but more of an annoyance with some referred ear pain. This week, I had a family member, who is a nurse, look at my throat to see if it was red or irritated. She noted I had quite a bit of post-nasal drip, but she could see no other issues. I had my tonsils removed as a kid, so they definitely are not the issue. I was thinking this might be caused by allergies, the trees and plants around are starting to bloom. I started taking some Claritin on top of painkillers, earlier this week. I also have been gargling with salt water. Those things seemed to help for a day or two, and the issue seemed to go away.Fast forward to last night, I woke up in the middle of the night with a burning pain in my stomach. This morning the burning pain keeps coming and going, and I can feel a lot of mucus dripping down the back of my throat. Is a burning stomach usually something that can be linked to post-nasal drip? I have never had an issue with acid reflux, so I do not think it is that. Also, the burning sensation is limited only to my lower abdomen.I typically do not have issues with severe allergies, so I am wondering if this could be caused by a virus? To be honest, I do not have a lot of confidence in my local doctor\\s office, and they tend to order a bunch of tests then overcharge for them. So I am wondering if I can get away with not seeing a doctor. I have ordered an air purifier for my room, and I am taking the allergy medicines religiously. Is there something else I can take or use to alleviate these symptoms? Or should I suck it up and see a doctor? I will also add that with these symptoms, I have had little to no nasal congestion or coughing. Thanks.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09195402298850575,
+      "trigger": {
+        "A": 0.9296875,
+        "B_k10_t0.7": 0.84375,
+        "B_k20_t0.9": 0.46875
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I had a white bump on my penis for the past three months. It did not cause any pain when I touched it, and when I tried to remove it in the shower, it did not budge. It is single and there was nothing else resembling it that showed up on my penis. It showed up maybe a day or two after sexual contact with my girlfriend. I am not sure if it is an STD.Today, during the shower I realized it was not there anymore. It either fell off or shrank, I have not been paying much attention to it the last couple days so I am not really sure. I am attaching a picture of what it looked like when I had it, and what it looks like now. It does not look like any STDs I have seen online, so I am at a loss as to what it could have been. Any help would be appreciated.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11707317073170732,
+      "trigger": {
+        "A": 0.8515625,
+        "B_k10_t0.7": 0.59375,
+        "B_k20_t0.9": 0.2109375
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,My urine is foamy. I am confused whether everyone will get bubble and foamy urine while urinating. Please explain me.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.14035087719298245,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.84375,
+        "B_k20_t0.9": 0.4921875
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "for piles , am using himalaya tablets .daily 2 tablets...but cant able sit properly due to anal itching ......please give me a medicine",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10582010582010581,
+      "trigger": {
+        "A": 0.7890625,
+        "B_k10_t0.7": 0.5625,
+        "B_k20_t0.9": 0.1953125
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I am 35 years old. About three hours ago, I was fleaing my dogs when I got a tiny bit of the flea killer in my mouth and on my lip. It was not alot. Will it harm me?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11842105263157894,
+      "trigger": {
+        "A": 0.8359375,
+        "B_k10_t0.7": 0.5390625,
+        "B_k20_t0.9": 0.2265625
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,I want to explain my wife\\s situation and I need your help and assistance. When my wife was in the kitchen, suddenly she felt some pain and heat in the upper part of her stomach and felt all her body become hot. I took her to the hospital, in the emergency department her pressure was 110/70 mmHg and the doctor requested ECG.The doctor showed some kind of worry in respect to the ECG, made some mark in the ECG and requested for a blood test. After four hours he repeated the blood test and the ECG and then he discharged her from the hospital and gave her some medicine for the stomach and advised me to follow up with heart doctor.Then we went to a heart doctor and he did another ECG and echo for her heart and advised us to get a CT image of her heart, so that he can decide and give opinion. We did not go for CT image until now and went to another doctor. He made another ECG and once he saw the ECG he was surprised and said that the ECG belongs to women of age 60 years old and not 32 years old. He requested blood test, gastroscopy, exercise ECG and prescribed Concor tablets 2.5 mg.Please advise me what is the problem with my wife\\s ECG? And what shall I do next? Shall I go with CT image or exercise ECG? Is it fine to take Concor tablets? By the way my wife age is 32 years old and we have four children of age 12, 9, 6 and 4 years. This is the first time my wife complaints of pain and now she is feeling better and doing her household works normally. Also, she does not have diabetes or blood pressure. Her weight is 63 kg, which is correct for her height. Please assist and advise me.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08921933085501858,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.6640625,
+        "B_k20_t0.9": 0.3203125
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hi doctor,I was just wondering how long germs would live on in a liquid lipstick? Around five weeks ago I had a vomiting bug, most likely gastro. I went out on Saturday night and wore a liquid lipstick, and was sick on Sunday. Will these germs still be living in the liquid lipstick and make me sick again or will they have died. Also, if I shared my liquid lipstick with someone who potentially had a cold sore, I am not sure if they get them or not, would those germs live in the liquid lipstick?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09774436090225563,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.7109375,
+        "B_k20_t0.9": 0.3828125
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I am an 18-year-old male and I am trying to find out if there is any way to lower my hairline. I had a big forehead since birth and I am wondering if there is any way to change that.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.20588235294117646,
+      "trigger": {
+        "A": 0.8671875,
+        "B_k10_t0.7": 0.6484375,
+        "B_k20_t0.9": 0.3828125
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "Hello doctor,I want to buy some equipment or medial device to prevent snoring during sleep. It should be safe and be able to buy online, preferably FDA approved.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1,
+      "trigger": {
+        "A": 0.9296875,
+        "B_k10_t0.7": 0.8125,
+        "B_k20_t0.9": 0.4609375
+      }
+    },
+    {
+      "temperature": 0.7,
+      "query": "What are the possibilities of transmitting HSV2 from an infected woman to a man and how to prevent it if they intend to enter into a relationship. Thanks",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09302325581395349,
+      "trigger": {
+        "A": 0.96875,
+        "B_k10_t0.7": 0.796875,
+        "B_k20_t0.9": 0.4609375
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,I am a 28 year old unmarried woman. Last month my period was irregular. I got my periods on the 30th of last month and it was already 20 days later from the actual due. Initially, I had spotting for five days, then I bled for seven days and again, had spotting for three days. Now, I am bleeding again from today on the 27th of this month. Please help me out. My height is 155 cm and weight is 63 kg. I have this complaint once since last month. Normally, my periods will occur in an interval on 40 to 45 days. This is the first time I am experiencing spotting, bleeding and delay. Is this a serious problem?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10891089108910891,
+      "trigger": {
+        "A": 0.8359375,
+        "B_k10_t0.7": 0.59375,
+        "B_k20_t0.9": 0.171875
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,So I never had acne on the back, maybe one or two single, but after visiting this massage center, which I know was a big mistake, my lower back is full of acne. I tried a couple of ointments, did not work. Cortisone helped a little, but not really. I think I need oral back up, any suggestions?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08571428571428572,
+      "trigger": {
+        "A": 0.828125,
+        "B_k10_t0.7": 0.46875,
+        "B_k20_t0.9": 0.1875
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I want to lose my weight. I am very obsessed. I want to get slim. Please tell me some exercises to lose weight. Please tell me exercises that I can do anywhere without any types of equipment.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.12048192771084339,
+      "trigger": {
+        "A": 0.96875,
+        "B_k10_t0.7": 0.8125,
+        "B_k20_t0.9": 0.609375
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I am an 18 year old male. My weight 46 Kg.I have been masturbating since 2010 till now.But now, I have been facing problems like premature ejaculation, nightfall, other problems like loss of appetite, weakness and poor memory. I ejaculate 3 times within 1 hour. I also watch porn videos. There is a swelling in my penis. I have attached pictures of the same.But I have no pain. Sometimes I have a burning sensation.My testicles start paining after 20 minutes of ejaculation and the pain goes away after 2 to 3 hours.And I do not feel hungry after masturbation.Is there anything wrong?I want to quit masturbation. So please guide me quit this forever.",
+      "n_documents": 10,
+      "n_steps": 7,
+      "rouge_l": 0.07017543859649124,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 0.42857142857142855,
+        "B_k20_t0.9": 0.0
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,I am facing hair loss problem for the past three years. I am a male, 25 years old, 5.4 inches height and 71 kg weight. My hair volume becomes very less. Please help.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.15686274509803924,
+      "trigger": {
+        "A": 0.7265625,
+        "B_k10_t0.7": 0.515625,
+        "B_k20_t0.9": 0.171875
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,What are the causes of pain in the first metatarsal that radiate to the entire forefoot?",
+      "n_documents": 1,
+      "n_steps": 128,
+      "rouge_l": 0.07142857142857142,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.6171875,
+        "B_k20_t0.9": 0.34375
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,I am a 24 year old female. I am in a relationship since three years. I am not treated with the same love and dignity by the person. In this duration of our relationship, he left me twice for two months without communication, and he used to text when he needed anything. It is always me, who has to give and make efforts. Whereas on the other end, he seems happy, and he does not bother nor miss me till he wants to have fun or money. He often treats me as an option. If I call, he gets irritated, and if I message, he just ignores them. I think it is time to put a stop to this. He does not give any commitment. He often says that some day our paths will be different. He wants materialistic things from me, rather than wanting me.Whenever I talk about marriage, he says that his family will not support us. Still, he wants to keep a relationship with me. I have left my close ones, and I have changed my personality for him. He was good before, but now I do not recognize him. I feel like a beggar, who begs for his time. I know that I am holding on to someone whose does not even care about me, but I am unable to get over it. I tried to divert myself with my hobbies and interests. I left my job, and now I do not have money. And he is earning well now. All this frustration is ruining me. I have insomnia, and I cannot sleep at nights. I have got hypothyroidism. This lonely feeling is eating me. I have many things to do, but I am not able to work on anything. Though I train myself to be strong, ultimately I land up getting fooled by his messages or the thought of seeing him with somebody else. But, I cannot take this kind of behavior from him. Please help.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.14634146341463414,
+      "trigger": {
+        "A": 0.953125,
+        "B_k10_t0.7": 0.90625,
+        "B_k20_t0.9": 0.6015625
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I did not realize my surgery would be so soon. I have been taking Ashwagandha and an Omega 3 supplement. I am having an enlarged lymph node removed in my neck under general anesthesia as an outpatient procedure. Will it be safe to undergo this procedure under anesthesia in a few days? I heard this might interfere with the effectiveness of the anesthesia.",
+      "n_documents": 0,
+      "n_steps": 20,
+      "rouge_l": 0.08108108108108107,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I am married for ten months. I had a miscarriage of 10 weeks baby. Now again, I expect five weeks of pregnancy. At my first miscarriage checkup, the doctor said that I have a fibroid of 3.2 cm within the uterus at the intermural side. Also, at that time, my TORCH test was positive. T and R were positive, and I took medicines. Will I have a safe pregnancy this time? What can I do? Please suggest.",
+      "n_documents": 10,
+      "n_steps": 46,
+      "rouge_l": 0.08602150537634409,
+      "trigger": {
+        "A": 0.8260869565217391,
+        "B_k10_t0.7": 0.4782608695652174,
+        "B_k20_t0.9": 0.15217391304347827
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi,I am approaching you since I am concerned about a situation regarding which I am very embarrassed. I am a 43 year old female. I am normally healthy. I am 178cm tall and I weigh 75kg. Around 9-12 months ago, I started to suffer from anal itching.It is rather intense at night, after passing stools and during/after having intercourse or anal masturbation.I also have few lumps on my anal ring that seem to grow outside of my anal opening as an extended piece of flesh.They are very sensitive but they are odd and it really troubles me.I fear that my problem started as a result of anal masturbation and anal sex.I feel very ashamed to say this. I was using anal toys and hand and I am afraid that during these years I myself  have created problems to my health and I do not know how to fix it.I do not have constipation and my stool is normal.I pass motion once a day and I have no abdominal pain while passing stools.Sometimes when I have anal sex I start bleeding from my rectum for a few seconds and then it stops.It does not bleed when I pass stools or any other time.I have not attained menopause even though my period seems to be every 6-7 weeks these days.I would appreciate if you can help me understand how to treat this issue and what should I do (i.e, special diet, special creams, instructions on how to clean the area etc.)Help me please, I am looking for a very discreet way to handle my situation since I am too concerned about talking with my spouse.",
+      "n_documents": 10,
+      "n_steps": 51,
+      "rouge_l": 0.09259259259259259,
+      "trigger": {
+        "A": 0.803921568627451,
+        "B_k10_t0.7": 0.7254901960784313,
+        "B_k20_t0.9": 0.3137254901960784
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,My eyes get watery when I talk to people or when I am nervous. Why is that happening?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.13580246913580246,
+      "trigger": {
+        "A": 0.8046875,
+        "B_k10_t0.7": 0.5625,
+        "B_k20_t0.9": 0.3046875
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I have had a sharp pain in my tailbone area when I am sitting or standing up. This has been going on for several months and has not improved. I recently saw a doctor. He diagnosed it as a curve in my lumbar and suggested I see a chiropractor here. Is there anything else I could do to fix this problem?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1087866108786611,
+      "trigger": {
+        "A": 0.875,
+        "B_k10_t0.7": 0.703125,
+        "B_k20_t0.9": 0.3515625
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I went to the doctor for a physical on 8th. I had blood work done. I went to the ER recently because I was feeling dizzy and tingling. The doctor said I have vertigo and they were not sure of the tingling. I received my blood work from my ER visit and I compared it to my annual exam. Below are the results:Between 8th and now:RBC 5.13 5.35HGB 16.1 16.7HCT 48.5 48.5MCH 31.5 31.2NA 131 141CL 105 97Protein 8.3 8.9SGOT 41 23All other numbers were normal. Do I need to be concerned with these numbers? After my 8th appt, the doctor did prescribe 20 mg of Lipitor (generic), but I stopped taking it after two weeks. I have also had diarrhea. I currently take Synthroid 0.05 mg. My blood pressure was high at my 8th appointment. It had never been high before.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09937888198757763,
+      "trigger": {
+        "A": 0.859375,
+        "B_k10_t0.7": 0.7265625,
+        "B_k20_t0.9": 0.4453125
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,I had genital warts last year, which has been treated. I got Pap smear, HIV, VDRL, and HSV tests, and all tests were non-reactive. I have white vaginal discharge, which is more than normal. The discharge is not smelly, and I do not have any itching. I have done an antibiotic course also, but this it is not improving. Please help. What is wrong with me?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08759124087591241,
+      "trigger": {
+        "A": 0.9140625,
+        "B_k10_t0.7": 0.6015625,
+        "B_k20_t0.9": 0.328125
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I got a cavity last year. I have left it untreated. It hurt really bad a year ago and stopped, but is not occurring again. I have not gone to the dentist because I do not want to make my parents spend the money. So, I have just been dealing with it. But it hurts really bad. Is there anything I can do?",
+      "n_documents": 10,
+      "n_steps": 108,
+      "rouge_l": 0.14285714285714285,
+      "trigger": {
+        "A": 0.8333333333333334,
+        "B_k10_t0.7": 0.7314814814814815,
+        "B_k20_t0.9": 0.3055555555555556
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,My daughter just had a tooth surgery and bleeding is not stopping. Is it normal? Three hours before only she had it.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10067114093959732,
+      "trigger": {
+        "A": 0.84375,
+        "B_k10_t0.7": 0.640625,
+        "B_k20_t0.9": 0.2890625
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,I have right shoulder and posterior scapula pain. The pain began a few years ago when a huge dog suddenly tried to run while I was holding his leash, resulting in my arm being pulled. A year after that, I fell on rocks and landed with a right outstretched hand. Now, my right shoulder is lower than the left and winged scapula. My x-rays are normal. I have attached my MRI. Do you notice any abnormalities in my right shoulder MRI?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.14173228346456693,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.71875,
+        "B_k20_t0.9": 0.3359375
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I am suffering from epididymitis problem. Sometimes I am having pain in testis while having a gastric issue as well. Kindly help me to get rid of this",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1095890410958904,
+      "trigger": {
+        "A": 0.8671875,
+        "B_k10_t0.7": 0.640625,
+        "B_k20_t0.9": 0.2578125
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor, My baby is 5 months old. I have given vaccine to her on 18th of this month, since then she was having fever every four hours the other day too. After that she is not drinking breastmilk and formula too. Now only drinks at night time while sleeping. What should I do?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10112359550561797,
+      "trigger": {
+        "A": 0.8671875,
+        "B_k10_t0.7": 0.75,
+        "B_k20_t0.9": 0.34375
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi,My hands are extremely rough since childhood. I am 17 years old now. I have tried almost everything to get rid of this problem. I also have so many lines on my palm and fingers. Suggest me some treatment.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.07936507936507936,
+      "trigger": {
+        "A": 0.8671875,
+        "B_k10_t0.7": 0.5859375,
+        "B_k20_t0.9": 0.328125
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I am 33 years old. I have been trying to conceive for eight months from now. I have monthly periods and positive OPKs and BBT shifts, but periods are also very light, basically spotting. I had an Ultrasound which showed a few cysts, had mildly elevated testosterone, normal LH and FSH, normal estrogen, low progesterone. My PCP is not convinced. I have PCOS but I am wondering if that is still a possibility and what I should anticipate for treatment in the future (clomid vs. progesterone therapy, etc.)?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09523809523809525,
+      "trigger": {
+        "A": 0.9296875,
+        "B_k10_t0.7": 0.6875,
+        "B_k20_t0.9": 0.2734375
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,My mother is 62 years old. She has purple-like patches on her arms and legs as shown in the attached picture. She said that she has it for over three to four years and these patches fade in a few days once they appear. My mother also has diabetes and hypertension. She is using some antibiotics for diabetes and hypertension. She also has substernal goiter and her biopsy was negative. I am attaching her blood and hormone results, which are in the normal range. Liver function tests were also normal. What are these fading purple-like patches?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.0851063829787234,
+      "trigger": {
+        "A": 0.84375,
+        "B_k10_t0.7": 0.625,
+        "B_k20_t0.9": 0.28125
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I get pain when my husband inserts, but I am not sure it is because of fear or physical pain. I contract my muscles and thighs, and he is not able to do it. We are not having proper sexual intercourse. I get highly wet too but contract myself when he inserts. Please help. I feel it is more of mental blockage.",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.11518324607329843,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,I have read that drinking alcohol affects the HIV test results. Does increased alcohol intake delay seroconversion time? If so, then how long one should wait? Three or six months? For such cases, can we take HIV DNA PCR as a screening test? Whether this test is also affected by much more alcohol intake or not. How reliable is this test? I had oral sex around three years back, and I consume 150 ml alcohol regularly. For such a person, what HIV screening is recommended? For late seroconversion, which test is taken to find out HIV infection? Please explain in detail, as I am obsessed with HIV. Thanks.",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.07633587786259541,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,My wife is suffering from peripartum cardiomyopathy for the past six months. She is taking beta blockers and diuretic medicine for the past four months. Her heart EF is 38 % with flat T in ECG reports. Her heart function is normal. How many days does it take to get cured?",
+      "n_documents": 10,
+      "n_steps": 54,
+      "rouge_l": 0.14173228346456695,
+      "trigger": {
+        "A": 0.9259259259259259,
+        "B_k10_t0.7": 0.7037037037037037,
+        "B_k20_t0.9": 0.2777777777777778
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,Recently, I did a full blood workup, and my eosinophil count, WBC, and B12 levels are high. I am a chronic sufferer of pouchitis. My creatinine and Bun levels are normal, like all other levels. I often take many supplements daily. Can you please help me? I am scared.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.14285714285714285,
+      "trigger": {
+        "A": 0.8671875,
+        "B_k10_t0.7": 0.6796875,
+        "B_k20_t0.9": 0.2265625
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,My husband and I have been in a monogamous relationship (I believe) for 14 years. We had sexual partners before this. A few weeks into my first pregnancy, he and I have just broken out into HPV genital warts. Is it possible for warts to appear 14 years later? Is it more probable that my partner has been unfaithful?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11494252873563217,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.796875,
+        "B_k20_t0.9": 0.421875
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I am 27 years old and going to get married after three months. I am facing premature ejaculation. I have a bad dream after two or three days regular basis. So fearing about marriage as I have this problem. Semen maybe not thick enough and ejaculate after only 12 to 15 strokes. Need valuable suggestions from your end.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08839779005524862,
+      "trigger": {
+        "A": 0.8515625,
+        "B_k10_t0.7": 0.7265625,
+        "B_k20_t0.9": 0.3828125
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I am 23 years old. I am obese and have a family history of cardiac arrest. My father got cardiac arrest at the age of 53. I have consulted the local cardiologist and gone through ECG, echo, TMT, lipid, hs-CRP and other blood tests. All the tests were normal except heart rate, which was 110 and also high BP. I am taking Rosufit 10, Nebistar 5 and Cilaheart 10. Currently, I am feeling warm in the left side of my chest for a short span of time. Sometimes, I have slight pain in my left hand and feels like a pinch type of pain in the center of the chest when I inhale and exhale. Is it normal?",
+      "n_documents": 10,
+      "n_steps": 42,
+      "rouge_l": 0.0718562874251497,
+      "trigger": {
+        "A": 0.8333333333333334,
+        "B_k10_t0.7": 0.47619047619047616,
+        "B_k20_t0.9": 0.19047619047619047
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,Is fibrous dysplasia a life-threatening disease or just a cosmetic problem in the upper mouth? Can CT scan show the overgrowth of bone in the upper mouth?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.17857142857142858,
+      "trigger": {
+        "A": 0.8828125,
+        "B_k10_t0.7": 0.703125,
+        "B_k20_t0.9": 0.3046875
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,The length of my penis is 5 and 1/2 inches and I am 38 years old. How can I increase my penis length? Is there any medicine, cream, lotion, oil or gel?",
+      "n_documents": 10,
+      "n_steps": 42,
+      "rouge_l": 0.08,
+      "trigger": {
+        "A": 0.8571428571428571,
+        "B_k10_t0.7": 0.5952380952380952,
+        "B_k20_t0.9": 0.23809523809523808
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,I am 30 years old. I have completed my marriage life for three years. I have no children. I have PCOD and thyroid. I have a prolactin level of 53 ng/mL. I am taking Metformin 500 mg. I am taking Caberlin 0.25 mg weekly once. I have severe hair loss. Can I take Kalarchikai choornam along with this medication?",
+      "n_documents": 0,
+      "n_steps": 128,
+      "rouge_l": 0.13793103448275862,
+      "trigger": {
+        "A": 1.0,
+        "B_k10_t0.7": 1.0,
+        "B_k20_t0.9": 1.0
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,My period is late by 21 days late. I got all the pregnancy tests done, but everything came back negative. I have lower left side pain, feel bloated on that side, back pain, and abdomen pain. I am 18 years old and weigh 170 lbs.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10666666666666666,
+      "trigger": {
+        "A": 0.84375,
+        "B_k10_t0.7": 0.6796875,
+        "B_k20_t0.9": 0.2734375
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I feel terrible before periods and I cannot sleep. My tummy comes out, also my breast become heavy, and I feel no hunger at all. My periods are regular but I am just tired of this thing happening to me even though my lifestyle is good. I am a vegan. Please help me. I want to cure it naturally.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10294117647058824,
+      "trigger": {
+        "A": 0.921875,
+        "B_k10_t0.7": 0.7109375,
+        "B_k20_t0.9": 0.4375
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,I have an STD question and hope to have an STD specialist doctor to assist me. I had a sexual contact three years ago and only last month I went for (VDRL nontreponemal test) and is negative. I have read online that after several years or after sometime usually, the result can be negative even if a person had syphilis before. I am afraid it might be a false negative since it was a few years ago. May I know should I test for Treponemal test such as TPPA or FTA-ABS to rule out the false negative by VDRL after three years test, I worry it might false negative by VDRL? The negative VDRL test was one month ago and possible exposure was three years ago. Does this mean the person does not have active syphilis infection? Does this also mean it would not proceed to latent or tertiary syphilis that will damage the body such as paralysis, numbness, gradual blindness and dementia?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1103448275862069,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.7578125,
+        "B_k20_t0.9": 0.453125
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Dear Doctor,I have taken Harmoni F for the past three months. Now I stopped taking it and planning for a baby.When will I get pregnant?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11764705882352941,
+      "trigger": {
+        "A": 0.84375,
+        "B_k10_t0.7": 0.4140625,
+        "B_k20_t0.9": 0.21875
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I am 60 years old. I am a Parkinson\\s patient. For about the last six months I am having pain in the left arm, shoulder and right leg from thighs downward.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11464968152866242,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.6328125,
+        "B_k20_t0.9": 0.3125
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,Since last 7 to 8 months I am having an eye infection, like a stye. It is getting frequent almost after every 3 to 4 weeks. I recollect having collided with somebody about one and half years back, hurt on my right eye with somebody\\s elbow and had a swollen eye, very painful and under the eye, it is red and swollen. After about 4 to 5 days, it started healing, and gradually I forgot about it. Now with this frequent infection in the same eye after every 3 to 4 weeks which lasts 3 to 5 days, sometimes pus and little blood come out and sometimes it heals without any pus coming out. This time it started with an itch and has gradually swollen and is very itchy and painful and red and swollen inside and outside the eye.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10256410256410255,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.7265625,
+        "B_k20_t0.9": 0.4921875
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,I just had an EGD with biopsy, polypectomy. It showed a hianal hernia 2 cm. I am attaching photos. The doctor took biopsies, said no cancer. I have had breast cancer in the past. I am having pain in the chest when I swallow, and sternum today. Will that subside? Is it from the bleeding? And, can you recommend the best pill to take for this pain, taking Pantoprazole now? And what should I take for this problem, what should I eat? (Can you assure there is no cancer)?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10628019323671498,
+      "trigger": {
+        "A": 0.8515625,
+        "B_k10_t0.7": 0.6328125,
+        "B_k20_t0.9": 0.25
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,My son is 1 and a half years old. A few months ago we came to know that his Hb is 4.3 and Hb F is 92 percent and that he has beta thalassemia intermedia. He was immediately transfused once. Now he is taking vitamin C, and Hydroxy and Folic acid and his Hb are 10.2. Please suggest some diet for him to maintain his health.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.182741116751269,
+      "trigger": {
+        "A": 0.9375,
+        "B_k10_t0.7": 0.7265625,
+        "B_k20_t0.9": 0.40625
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I have had a sore throat on and off, for the past few weeks. It is not severe, but more of an annoyance with some referred ear pain. This week, I had a family member, who is a nurse, look at my throat to see if it was red or irritated. She noted I had quite a bit of post-nasal drip, but she could see no other issues. I had my tonsils removed as a kid, so they definitely are not the issue. I was thinking this might be caused by allergies, the trees and plants around are starting to bloom. I started taking some Claritin on top of painkillers, earlier this week. I also have been gargling with salt water. Those things seemed to help for a day or two, and the issue seemed to go away.Fast forward to last night, I woke up in the middle of the night with a burning pain in my stomach. This morning the burning pain keeps coming and going, and I can feel a lot of mucus dripping down the back of my throat. Is a burning stomach usually something that can be linked to post-nasal drip? I have never had an issue with acid reflux, so I do not think it is that. Also, the burning sensation is limited only to my lower abdomen.I typically do not have issues with severe allergies, so I am wondering if this could be caused by a virus? To be honest, I do not have a lot of confidence in my local doctor\\s office, and they tend to order a bunch of tests then overcharge for them. So I am wondering if I can get away with not seeing a doctor. I have ordered an air purifier for my room, and I am taking the allergy medicines religiously. Is there something else I can take or use to alleviate these symptoms? Or should I suck it up and see a doctor? I will also add that with these symptoms, I have had little to no nasal congestion or coughing. Thanks.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.09774436090225562,
+      "trigger": {
+        "A": 0.8828125,
+        "B_k10_t0.7": 0.6875,
+        "B_k20_t0.9": 0.4140625
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I had a white bump on my penis for the past three months. It did not cause any pain when I touched it, and when I tried to remove it in the shower, it did not budge. It is single and there was nothing else resembling it that showed up on my penis. It showed up maybe a day or two after sexual contact with my girlfriend. I am not sure if it is an STD.Today, during the shower I realized it was not there anymore. It either fell off or shrank, I have not been paying much attention to it the last couple days so I am not really sure. I am attaching a picture of what it looked like when I had it, and what it looks like now. It does not look like any STDs I have seen online, so I am at a loss as to what it could have been. Any help would be appreciated.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1089108910891089,
+      "trigger": {
+        "A": 0.859375,
+        "B_k10_t0.7": 0.546875,
+        "B_k20_t0.9": 0.1796875
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,My urine is foamy. I am confused whether everyone will get bubble and foamy urine while urinating. Please explain me.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.11904761904761905,
+      "trigger": {
+        "A": 0.8828125,
+        "B_k10_t0.7": 0.6484375,
+        "B_k20_t0.9": 0.28125
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "for piles , am using himalaya tablets .daily 2 tablets...but cant able sit properly due to anal itching ......please give me a medicine",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10204081632653063,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.5546875,
+        "B_k20_t0.9": 0.2890625
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I am 35 years old. About three hours ago, I was fleaing my dogs when I got a tiny bit of the flea killer in my mouth and on my lip. It was not alot. Will it harm me?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.13253012048192772,
+      "trigger": {
+        "A": 0.8125,
+        "B_k10_t0.7": 0.53125,
+        "B_k20_t0.9": 0.2421875
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,I want to explain my wife\\s situation and I need your help and assistance. When my wife was in the kitchen, suddenly she felt some pain and heat in the upper part of her stomach and felt all her body become hot. I took her to the hospital, in the emergency department her pressure was 110/70 mmHg and the doctor requested ECG.The doctor showed some kind of worry in respect to the ECG, made some mark in the ECG and requested for a blood test. After four hours he repeated the blood test and the ECG and then he discharged her from the hospital and gave her some medicine for the stomach and advised me to follow up with heart doctor.Then we went to a heart doctor and he did another ECG and echo for her heart and advised us to get a CT image of her heart, so that he can decide and give opinion. We did not go for CT image until now and went to another doctor. He made another ECG and once he saw the ECG he was surprised and said that the ECG belongs to women of age 60 years old and not 32 years old. He requested blood test, gastroscopy, exercise ECG and prescribed Concor tablets 2.5 mg.Please advise me what is the problem with my wife\\s ECG? And what shall I do next? Shall I go with CT image or exercise ECG? Is it fine to take Concor tablets? By the way my wife age is 32 years old and we have four children of age 12, 9, 6 and 4 years. This is the first time my wife complaints of pain and now she is feeling better and doing her household works normally. Also, she does not have diabetes or blood pressure. Her weight is 63 kg, which is correct for her height. Please assist and advise me.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.0909090909090909,
+      "trigger": {
+        "A": 0.859375,
+        "B_k10_t0.7": 0.6875,
+        "B_k20_t0.9": 0.25
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hi doctor,I was just wondering how long germs would live on in a liquid lipstick? Around five weeks ago I had a vomiting bug, most likely gastro. I went out on Saturday night and wore a liquid lipstick, and was sick on Sunday. Will these germs still be living in the liquid lipstick and make me sick again or will they have died. Also, if I shared my liquid lipstick with someone who potentially had a cold sore, I am not sure if they get them or not, would those germs live in the liquid lipstick?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10600706713780916,
+      "trigger": {
+        "A": 0.890625,
+        "B_k10_t0.7": 0.703125,
+        "B_k20_t0.9": 0.3046875
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I am an 18-year-old male and I am trying to find out if there is any way to lower my hairline. I had a big forehead since birth and I am wondering if there is any way to change that.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.1826923076923077,
+      "trigger": {
+        "A": 0.8984375,
+        "B_k10_t0.7": 0.7265625,
+        "B_k20_t0.9": 0.3671875
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "Hello doctor,I want to buy some equipment or medial device to prevent snoring during sleep. It should be safe and be able to buy online, preferably FDA approved.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.10714285714285714,
+      "trigger": {
+        "A": 0.90625,
+        "B_k10_t0.7": 0.75,
+        "B_k20_t0.9": 0.453125
+      }
+    },
+    {
+      "temperature": 1.0,
+      "query": "What are the possibilities of transmitting HSV2 from an infected woman to a man and how to prevent it if they intend to enter into a relationship. Thanks",
+      "n_documents": 10,
+      "n_steps": 128,
+      "rouge_l": 0.08372093023255814,
+      "trigger": {
+        "A": 0.9453125,
+        "B_k10_t0.7": 0.7734375,
+        "B_k20_t0.9": 0.4765625
+      }
+    }
+  ]
+}
