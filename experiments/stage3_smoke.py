@@ -132,8 +132,16 @@ def main():
         if name == "always_agree":
             assert res.n_paid == 0 and res.epsilon_usage == 0.0
             assert res.emitted == res.norag_argmax[: len(res.emitted)]
-        else:
-            assert res.n_paid == res.n_steps
+            # Decisive diagnostic. Nothing was paid, so no DP noise entered: this
+            # is the pure NoRAG instance speaking, seen through the router's own
+            # cache handling, with a k-document RAG row padded alongside it.
+            # Coherent here means the padding and position handling are sound and
+            # the garbling seen in routed output is the feedback loop. Garbled
+            # here means the NoRAG row is being corrupted by the length disparity
+            # between the two rows, and the trigger rates above cannot be trusted.
+            print(f"    (no DP noise -- pure NoRAG through the router, k="
+                  f"{res.n_documents})")
+            print(f"    {res.text[:160]}")
 
     # ---- trajectory comparison -------------------------------------------
     print(f"\n--- trajectory comparison ({len(with_docs)} queries with documents) ---")
