@@ -53,6 +53,12 @@ STRATEGIES = {
 # What Stage 2.4 measured for the same configurations, on the NoRAG trajectory.
 STAGE2_TRIGGER = {"A": 0.875, "B_k20_t0.7": 0.745}
 
+# The two ends of the proposal's budget grid. At eps=10 the clipping is 0.110; at
+# eps=40 it is 0.295, so noise per paid token is roughly a third. Running both
+# separates "the routed output degrades" from "the routed output degrades at low
+# budget", which are different findings and call for different responses.
+EPSILON_GRID = [10.0, 40.0]
+
 
 def check_chunked_catch_up(dp_model, documents, question) -> bool:
     """One forward over N tokens must equal N forwards of one token.
@@ -143,56 +149,66 @@ def main():
                   f"{res.n_documents})")
             print(f"    {res.text[:160]}")
 
-    # ---- trajectory comparison -------------------------------------------
+    # ---- trajectory comparison, across the epsilon budget ----------------
+    # The NoRAG-driven rate carries no DP noise, so it does not depend on epsilon
+    # and is measured once.
     print(f"\n--- trajectory comparison ({len(with_docs)} queries with documents) ---")
-    print("Same query, same documents; only the driver differs.\n")
-    rows = []
-    for i, f in enumerate(with_docs):
-        row = {"query": f["query"], "k": len(f["docs"])}
+    print("Same query, same documents; the driver and the budget vary.\n")
 
-        # Stage 2's method: NoRAG drives, context stays clean.
+    norag_rates = {name: [] for name in STRATEGIES}
+    for f in with_docs:
         torch.manual_seed(exp.seed)
-        norag_driven = run_dual_instance(
+        driven = run_dual_instance(
             bench.dp_model, f["docs"], f["query"], plain_cfg, STRATEGIES
         )
         for name in STRATEGIES:
-            row[f"norag_{name}"] = norag_driven.trigger_rate(name)
+            norag_rates[name].append(driven.trigger_rate(name))
 
-        # The real thing: the router walks the routed trajectory.
-        for name, strategy in STRATEGIES.items():
-            torch.manual_seed(exp.seed)
-            routed = Router(bench.dp_model, strategy, dp_cfg).generate(
-                f["docs"], f["query"]
-            )
-            row[f"routed_{name}"] = routed.trigger_rate
-            if name == "A":
-                row["text"] = routed.text
+    # If the feedback reading is right, a bigger budget means less noise, a
+    # cleaner context, and a routed rate that climbs back toward the NoRAG one.
+    # A rate that does not move would say the mechanism is something else.
+    routed_rates = {e: {name: [] for name in STRATEGIES} for e in EPSILON_GRID}
+    samples = {e: [] for e in EPSILON_GRID}
+    for eps in EPSILON_GRID:
+        cfg = DPGenerationConfig(
+            temperature=exp.temperature, max_new_tokens=exp.max_new_tokens,
+            alpha=exp.alpha, omega=exp.omega, epsilon=eps, delta=exp.delta,
+        )
+        clipping = cfg.token_epsilon() * exp.temperature / 2
+        print(f"  eps_gen={eps}  (clipping={clipping:.4f})")
+        for i, f in enumerate(with_docs):
+            for name, strategy in STRATEGIES.items():
+                torch.manual_seed(exp.seed)
+                res = Router(bench.dp_model, strategy, cfg).generate(
+                    f["docs"], f["query"]
+                )
+                routed_rates[eps][name].append(res.trigger_rate)
+                if name == "A" and len(samples[eps]) < 3:
+                    samples[eps].append((res.trigger_rate, res.text))
+        print("    " + "  ".join(
+            f"{n}: {st.mean(routed_rates[eps][n]):.3f}" for n in STRATEGIES
+        ))
 
-        rows.append(row)
-        print(f"  [{i+1:2}/{len(with_docs)}] k={row['k']:2}  "
-              + "  ".join(
-                  f"{n}: NoRAG={row[f'norag_{n}']:.2f} routed={row[f'routed_{n}']:.2f}"
-                  for n in STRATEGIES
-              ))
-
-    print(f"\n{'strategy':>12} | {'NoRAG-driven':>12} | {'routed':>8} | "
-          f"{'delta':>7} | {'Stage 2.4':>9}")
-    print("-" * 60)
+    header = (f"\n{'strategy':>12} | {'NoRAG-driven':>12} | "
+              + " | ".join(f"{'routed eps=' + str(e):>14}" for e in EPSILON_GRID))
+    print(header)
+    print("-" * len(header))
     for name in STRATEGIES:
-        norag_mean = st.mean(r[f"norag_{name}"] for r in rows)
-        routed_mean = st.mean(r[f"routed_{name}"] for r in rows)
-        print(f"{name:>12} | {norag_mean:>12.3f} | {routed_mean:>8.3f} | "
-              f"{routed_mean - norag_mean:>+7.3f} | {STAGE2_TRIGGER[name]:>9.3f}")
+        norag_mean = st.mean(norag_rates[name])
+        cells = []
+        for eps in EPSILON_GRID:
+            routed_mean = st.mean(routed_rates[eps][name])
+            cells.append(f"{routed_mean:>7.3f} ({routed_mean - norag_mean:+.3f})")
+        print(f"{name:>12} | {norag_mean:>12.3f} | " + " | ".join(cells))
 
-    print("\nA large negative delta supports the feedback hypothesis: the routed")
-    print("trajectory degrades, the instances diverge, and fewer positions are free.")
-    print("If so, every trigger rate measured on the NoRAG trajectory is optimistic")
-    print("and Stage 3's expectations need adjusting.\n")
+    print("\nIf the gap narrows as epsilon grows, the feedback reading holds: less")
+    print("noise keeps the context intact, so the two instances stay in agreement.")
+    print("If the gap is flat, something other than context degradation is at work.")
 
-    print("Sample routed output (strategy A):")
-    for r in rows[:3]:
-        print(f"  k={r['k']:2} trigger={r['routed_A']:.2f}  "
-              f"{r['text'][:100].replace(chr(10), ' ')}")
+    for eps in EPSILON_GRID:
+        print(f"\nSample routed output (strategy A, eps_gen={eps}):")
+        for trigger, text in samples[eps]:
+            print(f"  trigger={trigger:.2f}  {text[:110].replace(chr(10), ' ')}")
 
 
 if __name__ == "__main__":
