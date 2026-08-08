@@ -148,6 +148,22 @@ def main():
             print(f"    (no DP noise -- pure NoRAG through the router, k="
                   f"{res.n_documents})")
             print(f"    {res.text[:160]}")
+        else:
+            assert res.n_paid == res.n_steps
+            # Paying at every position IS plain DPRAG, so this has to read like
+            # the baseline printed just below. The two run the same aggregation by
+            # different means -- dp_chat through generate(), this through the
+            # router's own loop -- so a divergence localises the fault to the paid
+            # path. The epsilon sweep points there already: cutting the noise
+            # threefold barely changed the routed text, which cannot happen if DP
+            # noise is what shapes it.
+            print("    (every position paid -- this IS plain DPRAG)")
+            print(f"    {res.text[:160]}")
+
+    torch.manual_seed(exp.seed)
+    baseline = bench.dp_model.dp_chat(first["docs"], first["query"], dp_cfg)
+    print("  dp_chat      (upstream path, through generate())")
+    print(f"    {baseline[:160]}")
 
     # ---- trajectory comparison, across the epsilon budget ----------------
     # The NoRAG-driven rate carries no DP noise, so it does not depend on epsilon
