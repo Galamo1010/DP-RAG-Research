@@ -84,14 +84,17 @@ class _FakeRouterModel:
     def __init__(self, owner):
         self.owner = owner
         self.calls: list[tuple[int, int]] = []
+        self.positions: list[torch.Tensor | None] = []
 
-    def __call__(self, input_ids, attention_mask, past_key_values, use_cache):
+    def __call__(self, input_ids, attention_mask, past_key_values, use_cache,
+                 position_ids=None):
         batch, n_new = input_ids.shape
         scripts = self.owner._prefilter if batch == 2 else self.owner._dprag
         seen = 0 if past_key_values is None else past_key_values
         advanced = 1 if past_key_values is None else n_new
         next_seen = seen + advanced
         self.calls.append((batch, n_new))
+        self.positions.append(position_ids)
         rows = [
             scripts[row][min(next_seen - 1, len(scripts[row]) - 1)]
             for row in range(batch)
@@ -283,6 +286,33 @@ def test_records_are_all_the_same_length():
     router, _ = _build(norag, [6, 6, 6, 6], alternating, max_new_tokens=4)
     result = router.generate(DOCS, "q")
     assert len(result.decisions) == len(result.emitted) == len(result.norag_argmax)
+
+
+def test_position_ids_come_from_the_attention_mask():
+    """Left-padded rows must not share a single arange of positions.
+
+    The batch is left-padded and each row carries a different amount of padding, so
+    a model left to its default would place padded rows at the wrong rotary
+    positions -- silently, and only on a real model. generate() derives positions
+    from the mask; driving the model directly means doing the same.
+    """
+    class _PaddedTokenizer(_FakeTokenizer):
+        def apply_chat_template(self, conversations, **kwargs):
+            batch = len(conversations)
+            mask = torch.ones((batch, 4), dtype=torch.long)
+            mask[0, :2] = 0                      # row 0 is padded by two
+            return {"input_ids": torch.zeros((batch, 4), dtype=torch.long),
+                    "attention_mask": mask}
+
+    norag = [1, 2]
+    router, model = _build(norag, norag, ALWAYS_AGREE, max_new_tokens=2)
+    router.dp_model.tokenizer = _PaddedTokenizer()
+    router.generate(DOCS, "q")
+
+    prompt_positions = model.model.positions[0]
+    # Real content starts at 0 regardless of how much padding precedes it.
+    assert prompt_positions[0].tolist() == [1, 1, 0, 1]   # padded slots masked to 1
+    assert prompt_positions[1].tolist() == [0, 1, 2, 3]   # unpadded row counts up
 
 
 def test_result_carries_the_accounting_caveat():

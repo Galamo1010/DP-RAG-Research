@@ -100,10 +100,20 @@ class _Stream:
         self.primed = False
 
     def _forward(self, ids: Tensor, mask: Tensor) -> Tensor:
+        # position_ids must be derived from the attention mask, not left to the
+        # model's default arange. The batch is left-padded and each row carries a
+        # different amount of padding, so a shared arange would place padded rows
+        # at the wrong rotary positions. generate() does this in
+        # prepare_inputs_for_generation; driving the model directly means doing it
+        # here.
+        positions = mask.long().cumsum(-1) - 1
+        positions = positions.masked_fill(mask == 0, 1)
+        positions = positions[:, -ids.shape[1]:]
         with torch.no_grad():
             out = self.model(
                 input_ids=ids,
                 attention_mask=mask,
+                position_ids=positions,
                 past_key_values=self._cache,
                 use_cache=True,
             )
