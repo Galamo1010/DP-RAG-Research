@@ -16,7 +16,14 @@ Any error in the backlog catch-up shows up as a divergence from one or the other
 
 import torch
 
-from dprag.router import Router, _composed_epsilon
+from transformers.generation.logits_process import (
+    MinPLogitsWarper,
+    TemperatureLogitsWarper,
+    TopKLogitsWarper,
+    TopPLogitsWarper,
+)
+
+from dprag.router import Router, _composed_epsilon, sampling_warpers
 from dprag.strategies import PrefilterDecision
 
 VOCAB = 12
@@ -104,11 +111,19 @@ class _FakeRouterModel:
 
 
 class _FakeConfig:
-    def __init__(self, max_new_tokens=6, temperature=1.0, delta=1e-3, token_eps=0.2):
+    # top_k=50 mirrors GenerationConfig's default, which is what upstream DPRAG
+    # samples under. Leaving it out of the fake was how the router shipped without
+    # it in the first place.
+    def __init__(self, max_new_tokens=6, temperature=1.0, delta=1e-3, token_eps=0.2,
+                 top_k=50, top_p=1.0, min_p=None, typical_p=1.0):
         self.max_new_tokens = max_new_tokens
         self.temperature = temperature
         self.delta = delta
         self._token_eps = token_eps
+        self.top_k = top_k
+        self.top_p = top_p
+        self.min_p = min_p
+        self.typical_p = typical_p
 
     def token_epsilon(self):
         return self._token_eps
@@ -313,6 +328,62 @@ def test_position_ids_come_from_the_attention_mask():
     # Real content starts at 0 regardless of how much padding precedes it.
     assert prompt_positions[0].tolist() == [1, 1, 0, 1]   # padded slots masked to 1
     assert prompt_positions[1].tolist() == [0, 1, 2, 3]   # unpadded row counts up
+
+
+# --------------------------------------------------------------------------
+# sampling warpers -- the paid path must sample the way generate() does
+# --------------------------------------------------------------------------
+
+def test_top_k_default_is_applied():
+    """GenerationConfig defaults to top_k=50 and generate() honours it.
+
+    Missing this was a real bug: the aggregated score spans only about
+    +/-(k x clipping), which concentrates nothing across a 128k vocabulary, so
+    sampling the full vocabulary produced gibberish out of rare tokens and barely
+    responded to epsilon. Upstream looked fine because top_k=50 confined it to the
+    tokens the documents supported.
+    """
+    warpers = sampling_warpers(_FakeConfig())
+    assert any(isinstance(w, TopKLogitsWarper) for w in warpers)
+
+
+def test_top_k_actually_truncates_the_distribution():
+    warped = sampling_warpers(_FakeConfig(top_k=2))(
+        None, torch.tensor([[1.0, 5.0, 3.0, 0.5]])
+    )
+    kept = torch.isfinite(warped[0]) & (warped[0] > -1e30)
+    assert kept.tolist() == [False, True, True, False]   # only the top two survive
+
+
+def test_top_k_one_makes_the_paid_path_deterministic():
+    """With top_k=1 only the aggregated argmax can be sampled.
+
+    An end-to-end check that the warpers really sit between the aggregator and
+    multinomial: the fake aggregator peaks on the document row, so every paid
+    position must emit exactly that token.
+    """
+    norag, doc = [1, 1, 1], [7, 7, 7]
+    router, _ = _build(norag, doc, NEVER_AGREE, max_new_tokens=3, top_k=1)
+    assert router.generate(DOCS, "q").emitted == doc
+
+
+def test_temperature_is_applied_once_via_the_warpers():
+    """Temperature belongs to the warpers; applying it again by hand would square it."""
+    assert not any(
+        isinstance(w, TemperatureLogitsWarper) for w in sampling_warpers(_FakeConfig())
+    )
+    hot = sampling_warpers(_FakeConfig(temperature=0.5))
+    assert any(isinstance(w, TemperatureLogitsWarper) for w in hot)
+
+
+def test_disabled_knobs_add_no_warpers():
+    plain = sampling_warpers(_FakeConfig(top_k=0, top_p=1.0, typical_p=1.0))
+    assert list(plain) == []
+
+
+def test_top_p_and_min_p_are_honoured_when_set():
+    assert any(isinstance(w, TopPLogitsWarper) for w in sampling_warpers(_FakeConfig(top_p=0.9)))
+    assert any(isinstance(w, MinPLogitsWarper) for w in sampling_warpers(_FakeConfig(min_p=0.1)))
 
 
 def test_result_carries_the_accounting_caveat():

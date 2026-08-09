@@ -51,6 +51,14 @@ from functools import lru_cache
 
 import torch
 from torch import Tensor
+from transformers.generation.logits_process import (
+    LogitsProcessorList,
+    MinPLogitsWarper,
+    TemperatureLogitsWarper,
+    TopKLogitsWarper,
+    TopPLogitsWarper,
+    TypicalLogitsWarper,
+)
 
 from . import prompts
 from .dual_instance import NORAG_ROW, RAG_ROW
@@ -60,6 +68,38 @@ EPSILON_ACCOUNTING_NOTE = (
     "paid positions only; assumes the routing decisions are themselves free -- "
     "tested empirically in Stage 4.3"
 )
+
+
+def sampling_warpers(config) -> LogitsProcessorList:
+    """The warpers generate() would apply to the aggregated scores before sampling.
+
+    Reproducing these is not optional. GenerationConfig defaults to **top_k=50**,
+    so upstream DPRAG samples from the fifty highest-scoring tokens -- the ones the
+    documents actually support. Sampling over the full vocabulary instead draws
+    from a near-uniform distribution: the aggregated score spans roughly
+    +/-(k x clipping), a couple of nats, which concentrates nothing across 128k
+    tokens. The result is fluent-looking gibberish assembled from rare tokens, and
+    it barely responds to epsilon, because the distribution is flat either way.
+
+    Ordering matches generate(): temperature, then the truncation warpers.
+    """
+    warpers = LogitsProcessorList()
+    temperature = getattr(config, "temperature", None)
+    if temperature is not None and temperature != 1.0:
+        warpers.append(TemperatureLogitsWarper(float(temperature)))
+    top_k = getattr(config, "top_k", None)
+    if top_k:
+        warpers.append(TopKLogitsWarper(int(top_k)))
+    top_p = getattr(config, "top_p", None)
+    if top_p is not None and top_p < 1.0:
+        warpers.append(TopPLogitsWarper(float(top_p)))
+    min_p = getattr(config, "min_p", None)
+    if min_p is not None:
+        warpers.append(MinPLogitsWarper(float(min_p)))
+    typical_p = getattr(config, "typical_p", None)
+    if typical_p is not None and typical_p < 1.0:
+        warpers.append(TypicalLogitsWarper(float(typical_p)))
+    return warpers
 
 
 @lru_cache(maxsize=None)
@@ -216,6 +256,7 @@ class Router:
         cfg = self.config
         tokenizer = self.dp_model.tokenizer
         aggregator = self.dp_model.dp_logits_aggregator(cfg)
+        warpers = sampling_warpers(cfg)
         token_epsilon = cfg.token_epsilon()
         eos = tokenizer.eos_token_id
 
@@ -248,9 +289,11 @@ class Router:
                 dp_scores = dprag.advance(backlog)
                 backlog = []
                 aggregated = aggregator(None, dp_scores)
-                # Same order generate() uses: processor first, then temperature,
-                # then sample. Reversing it would break the exponential mechanism.
-                probs = torch.softmax(aggregated[0] / cfg.temperature, dim=-1)
+                # generate()'s order: the aggregator (a logits processor), then
+                # the sampling warpers, then multinomial. Temperature lives in the
+                # warpers, so it must not also be applied by hand here.
+                warped = warpers(None, aggregated)
+                probs = torch.softmax(warped[0], dim=-1)
                 token = int(torch.multinomial(probs, num_samples=1))
                 paid_positions.append(position)
 
