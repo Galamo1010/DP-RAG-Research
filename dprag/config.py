@@ -97,6 +97,14 @@ class ExperimentConfig:
     max_retrieve: int = 10
     embed_batch_size: int = 32
 
+    # -- Medical entity detection (Stage 2.5) -------------------------------
+    # A word counts as clinical only if it occurs at least this often in the
+    # corpus, which is what separates a real term from a DP-noise artifact
+    # ("Totosis" occurs 0 times). It belongs here rather than in the experiment
+    # because the reported medical rates move with it: at 1 a one-off typo is
+    # admitted, at 10 real conditions start dropping out ("orchitis" occurs 7).
+    vocab_min_count: int = 3
+
     # -- Data sampling ------------------------------------------------------
     n_docs: int = 10000            # corpus docs embedded into the store
     n_queries: int = 200           # proposal requires >= 200 for stable rates

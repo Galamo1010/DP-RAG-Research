@@ -1,0 +1,444 @@
+{
+  "schema": 1,
+  "name": "stage2_safety_check",
+  "created_at": "2026-07-30T06:43:49+00:00",
+  "git_commit": "5ed78b6",
+  "git_dirty": true,
+  "params": {
+    "delta": 0.001,
+    "eps_retrieval": 0.2,
+    "gen_epsilon": 10.0,
+    "temperature": 1.0,
+    "max_new_tokens": 128,
+    "alpha": 1.0,
+    "omega": 0.01,
+    "gen_model": "meta-llama/Llama-3.1-8B-Instruct",
+    "embed_model": "Snowflake/snowflake-arctic-embed-m-v1.5",
+    "retrieval_top_p": 0.02,
+    "retrieval_top_k": null,
+    "min_score": -0.5,
+    "max_score": 0.8,
+    "max_retrieve": 10,
+    "embed_batch_size": 32,
+    "n_docs": 10000,
+    "n_queries": 30,
+    "corpus_seed": 7,
+    "query_seed": 42,
+    "seed": 42
+  },
+  "metrics": {
+    "detection": "regex heuristic (dprag.medical_flags); scispaCy is Stage 5",
+    "n_queries_scored": 27,
+    "total_medical_positions": 3,
+    "total_plain_positions": 3168,
+    "mean_medical_per_query": 0.1111111111111111,
+    "by_strategy": {
+      "A": {
+        "skipped_medical": 3,
+        "skipped_plain": 2786,
+        "medical_skip_rate": 1.0,
+        "plain_skip_rate": 0.8794191919191919,
+        "relative_risk": 1.1371141421392676
+      },
+      "B_k20_t0.9": {
+        "skipped_medical": 1,
+        "skipped_plain": 927,
+        "medical_skip_rate": 0.3333333333333333,
+        "plain_skip_rate": 0.29261363636363635,
+        "relative_risk": 1.13915857605178
+      },
+      "B_k20_t0.7": {
+        "skipped_medical": 2,
+        "skipped_plain": 2341,
+        "medical_skip_rate": 0.6666666666666666,
+        "plain_skip_rate": 0.7389520202020202,
+        "relative_risk": 0.9021785561725757
+      },
+      "B_k50_t0.5": {
+        "skipped_medical": 3,
+        "skipped_plain": 3059,
+        "medical_skip_rate": 1.0,
+        "plain_skip_rate": 0.9655934343434344,
+        "relative_risk": 1.0356325596600195
+      }
+    },
+    "flagged_examples": [
+      {
+        "query": "Hello doctor,So I never had acne on the back, maybe one or two single, but after visiting this massage center, which I k",
+        "position": 90,
+        "token": " cort",
+        "context": " already tried with some treatmentsintments and cortisone, it's be best",
+        "jaccard": 0.7857142857142857
+      },
+      {
+        "query": "Hello doctor,So I never had acne on the back, maybe one or two single, but after visiting this massage center, which I k",
+        "position": 91,
+        "token": "is",
+        "context": " tried with some treatmentsintments and cortisone, it's be best to",
+        "jaccard": 0.8181818181818182
+      },
+      {
+        "query": "Hello doctor,So I never had acne on the back, maybe one or two single, but after visiting this massage center, which I k",
+        "position": 92,
+        "token": "one",
+        "context": " with some treatmentsintments and cortisone, it's be best to consult",
+        "jaccard": 0.7241379310344828
+      }
+    ]
+  },
+  "per_item": [
+    {
+      "query": "Hi doctor,I am a 28 year old unmarried woman. Last month my period was irregular. I got my periods on the 30th of last month and it was already 20 days later from the actual due. Initially, I had spotting for five days, then I bled for seven days and again, had spotting for three days. Now, I am bleeding again from today on the 27th of this month. Please help me out. My height is 155 cm and weight is 63 kg. I have this complaint once since last month. Normally, my periods will occur in an interval on 40 to 45 days. This is the first time I am experiencing spotting, bleeding and delay. Is this a serious problem?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.8359375,
+        "B_k20_t0.9": 0.1484375,
+        "B_k20_t0.7": 0.59375,
+        "B_k50_t0.5": 0.953125
+      }
+    },
+    {
+      "query": "Hello doctor,So I never had acne on the back, maybe one or two single, but after visiting this massage center, which I know was a big mistake, my lower back is full of acne. I tried a couple of ointments, did not work. Cortisone helped a little, but not really. I think I need oral back up, any suggestions?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 3,
+      "medical_matches": [
+        "cortisone"
+      ],
+      "trigger": {
+        "A": 0.796875,
+        "B_k20_t0.9": 0.1640625,
+        "B_k20_t0.7": 0.5390625,
+        "B_k50_t0.5": 0.9140625
+      }
+    },
+    {
+      "query": "Hello doctor,I want to lose my weight. I am very obsessed. I want to get slim. Please tell me some exercises to lose weight. Please tell me exercises that I can do anywhere without any types of equipment.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.953125,
+        "B_k20_t0.9": 0.5,
+        "B_k20_t0.7": 0.84375,
+        "B_k50_t0.5": 0.984375
+      }
+    },
+    {
+      "query": "Hello doctor,I am an 18 year old male. My weight 46 Kg.I have been masturbating since 2010 till now.But now, I have been facing problems like premature ejaculation, nightfall, other problems like loss of appetite, weakness and poor memory. I ejaculate 3 times within 1 hour. I also watch porn videos. There is a swelling in my penis. I have attached pictures of the same.But I have no pain. Sometimes I have a burning sensation.My testicles start paining after 20 minutes of ejaculation and the pain goes away after 2 to 3 hours.And I do not feel hungry after masturbation.Is there anything wrong?I want to quit masturbation. So please guide me quit this forever.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.890625,
+        "B_k20_t0.9": 0.2734375,
+        "B_k20_t0.7": 0.78125,
+        "B_k50_t0.5": 0.984375
+      }
+    },
+    {
+      "query": "Hi doctor,I am facing hair loss problem for the past three years. I am a male, 25 years old, 5.4 inches height and 71 kg weight. My hair volume becomes very less. Please help.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.859375,
+        "B_k20_t0.9": 0.21875,
+        "B_k20_t0.7": 0.6328125,
+        "B_k50_t0.5": 0.953125
+      }
+    },
+    {
+      "query": "Hi doctor,What are the causes of pain in the first metatarsal that radiate to the entire forefoot?",
+      "n_documents": 1,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.9375,
+        "B_k20_t0.9": 0.4140625,
+        "B_k20_t0.7": 0.8046875,
+        "B_k50_t0.5": 0.953125
+      }
+    },
+    {
+      "query": "Hi doctor,I am a 24 year old female. I am in a relationship since three years. I am not treated with the same love and dignity by the person. In this duration of our relationship, he left me twice for two months without communication, and he used to text when he needed anything. It is always me, who has to give and make efforts. Whereas on the other end, he seems happy, and he does not bother nor miss me till he wants to have fun or money. He often treats me as an option. If I call, he gets irritated, and if I message, he just ignores them. I think it is time to put a stop to this. He does not give any commitment. He often says that some day our paths will be different. He wants materialistic things from me, rather than wanting me.Whenever I talk about marriage, he says that his family will not support us. Still, he wants to keep a relationship with me. I have left my close ones, and I have changed my personality for him. He was good before, but now I do not recognize him. I feel like a beggar, who begs for his time. I know that I am holding on to someone whose does not even care about me, but I am unable to get over it. I tried to divert myself with my hobbies and interests. I left my job, and now I do not have money. And he is earning well now. All this frustration is ruining me. I have insomnia, and I cannot sleep at nights. I have got hypothyroidism. This lonely feeling is eating me. I have many things to do, but I am not able to work on anything. Though I train myself to be strong, ultimately I land up getting fooled by his messages or the thought of seeing him with somebody else. But, I cannot take this kind of behavior from him. Please help.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.90625,
+        "B_k20_t0.9": 0.359375,
+        "B_k20_t0.7": 0.8515625,
+        "B_k50_t0.5": 1.0
+      }
+    },
+    {
+      "query": "Hello doctor,I am married for ten months. I had a miscarriage of 10 weeks baby. Now again, I expect five weeks of pregnancy. At my first miscarriage checkup, the doctor said that I have a fibroid of 3.2 cm within the uterus at the intermural side. Also, at that time, my TORCH test was positive. T and R were positive, and I took medicines. Will I have a safe pregnancy this time? What can I do? Please suggest.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.84375,
+        "B_k20_t0.9": 0.140625,
+        "B_k20_t0.7": 0.625,
+        "B_k50_t0.5": 0.9375
+      }
+    },
+    {
+      "query": "Hi,I am approaching you since I am concerned about a situation regarding which I am very embarrassed. I am a 43 year old female. I am normally healthy. I am 178cm tall and I weigh 75kg. Around 9-12 months ago, I started to suffer from anal itching.It is rather intense at night, after passing stools and during/after having intercourse or anal masturbation.I also have few lumps on my anal ring that seem to grow outside of my anal opening as an extended piece of flesh.They are very sensitive but they are odd and it really troubles me.I fear that my problem started as a result of anal masturbation and anal sex.I feel very ashamed to say this. I was using anal toys and hand and I am afraid that during these years I myself  have created problems to my health and I do not know how to fix it.I do not have constipation and my stool is normal.I pass motion once a day and I have no abdominal pain while passing stools.Sometimes when I have anal sex I start bleeding from my rectum for a few seconds and then it stops.It does not bleed when I pass stools or any other time.I have not attained menopause even though my period seems to be every 6-7 weeks these days.I would appreciate if you can help me understand how to treat this issue and what should I do (i.e, special diet, special creams, instructions on how to clean the area etc.)Help me please, I am looking for a very discreet way to handle my situation since I am too concerned about talking with my spouse.",
+      "n_documents": 10,
+      "n_steps": 12,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.6666666666666666,
+        "B_k20_t0.9": 0.08333333333333333,
+        "B_k20_t0.7": 0.6666666666666666,
+        "B_k50_t0.5": 1.0
+      }
+    },
+    {
+      "query": "Hello doctor,My eyes get watery when I talk to people or when I am nervous. Why is that happening?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.9140625,
+        "B_k20_t0.9": 0.375,
+        "B_k20_t0.7": 0.796875,
+        "B_k50_t0.5": 0.9765625
+      }
+    },
+    {
+      "query": "Hello doctor,I have had a sharp pain in my tailbone area when I am sitting or standing up. This has been going on for several months and has not improved. I recently saw a doctor. He diagnosed it as a curve in my lumbar and suggested I see a chiropractor here. Is there anything else I could do to fix this problem?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.8984375,
+        "B_k20_t0.9": 0.328125,
+        "B_k20_t0.7": 0.765625,
+        "B_k50_t0.5": 0.984375
+      }
+    },
+    {
+      "query": "Hello doctor,I went to the doctor for a physical on 8th. I had blood work done. I went to the ER recently because I was feeling dizzy and tingling. The doctor said I have vertigo and they were not sure of the tingling. I received my blood work from my ER visit and I compared it to my annual exam. Below are the results:Between 8th and now:RBC 5.13 5.35HGB 16.1 16.7HCT 48.5 48.5MCH 31.5 31.2NA 131 141CL 105 97Protein 8.3 8.9SGOT 41 23All other numbers were normal. Do I need to be concerned with these numbers? After my 8th appt, the doctor did prescribe 20 mg of Lipitor (generic), but I stopped taking it after two weeks. I have also had diarrhea. I currently take Synthroid 0.05 mg. My blood pressure was high at my 8th appointment. It had never been high before.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.921875,
+        "B_k20_t0.9": 0.3046875,
+        "B_k20_t0.7": 0.859375,
+        "B_k50_t0.5": 0.9921875
+      }
+    },
+    {
+      "query": "Hi doctor,I had genital warts last year, which has been treated. I got Pap smear, HIV, VDRL, and HSV tests, and all tests were non-reactive. I have white vaginal discharge, which is more than normal. The discharge is not smelly, and I do not have any itching. I have done an antibiotic course also, but this it is not improving. Please help. What is wrong with me?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.9296875,
+        "B_k20_t0.9": 0.1953125,
+        "B_k20_t0.7": 0.6171875,
+        "B_k50_t0.5": 0.953125
+      }
+    },
+    {
+      "query": "Hello doctor,I got a cavity last year. I have left it untreated. It hurt really bad a year ago and stopped, but is not occurring again. I have not gone to the dentist because I do not want to make my parents spend the money. So, I have just been dealing with it. But it hurts really bad. Is there anything I can do?",
+      "n_documents": 10,
+      "n_steps": 37,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.8648648648648649,
+        "B_k20_t0.9": 0.13513513513513514,
+        "B_k20_t0.7": 0.7027027027027027,
+        "B_k50_t0.5": 0.9459459459459459
+      }
+    },
+    {
+      "query": "Hello doctor,My daughter just had a tooth surgery and bleeding is not stopping. Is it normal? Three hours before only she had it.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.8515625,
+        "B_k20_t0.9": 0.171875,
+        "B_k20_t0.7": 0.7265625,
+        "B_k50_t0.5": 0.984375
+      }
+    },
+    {
+      "query": "Hi doctor,I have right shoulder and posterior scapula pain. The pain began a few years ago when a huge dog suddenly tried to run while I was holding his leash, resulting in my arm being pulled. A year after that, I fell on rocks and landed with a right outstretched hand. Now, my right shoulder is lower than the left and winged scapula. My x-rays are normal. I have attached my MRI. Do you notice any abnormalities in my right shoulder MRI?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.875,
+        "B_k20_t0.9": 0.265625,
+        "B_k20_t0.7": 0.7265625,
+        "B_k50_t0.5": 0.984375
+      }
+    },
+    {
+      "query": "Hello doctor,I am suffering from epididymitis problem. Sometimes I am having pain in testis while having a gastric issue as well. Kindly help me to get rid of this",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.8125,
+        "B_k20_t0.9": 0.171875,
+        "B_k20_t0.7": 0.578125,
+        "B_k50_t0.5": 0.953125
+      }
+    },
+    {
+      "query": "Hello doctor, My baby is 5 months old. I have given vaccine to her on 18th of this month, since then she was having fever every four hours the other day too. After that she is not drinking breastmilk and formula too. Now only drinks at night time while sleeping. What should I do?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.8359375,
+        "B_k20_t0.9": 0.2578125,
+        "B_k20_t0.7": 0.7109375,
+        "B_k50_t0.5": 0.9375
+      }
+    },
+    {
+      "query": "Hi,My hands are extremely rough since childhood. I am 17 years old now. I have tried almost everything to get rid of this problem. I also have so many lines on my palm and fingers. Suggest me some treatment.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.8828125,
+        "B_k20_t0.9": 0.2265625,
+        "B_k20_t0.7": 0.7890625,
+        "B_k50_t0.5": 0.984375
+      }
+    },
+    {
+      "query": "Hello doctor,I am 33 years old. I have been trying to conceive for eight months from now. I have monthly periods and positive OPKs and BBT shifts, but periods are also very light, basically spotting. I had an Ultrasound which showed a few cysts, had mildly elevated testosterone, normal LH and FSH, normal estrogen, low progesterone. My PCP is not convinced. I have PCOS but I am wondering if that is still a possibility and what I should anticipate for treatment in the future (clomid vs. progesterone therapy, etc.)?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.859375,
+        "B_k20_t0.9": 0.2734375,
+        "B_k20_t0.7": 0.7578125,
+        "B_k50_t0.5": 0.9921875
+      }
+    },
+    {
+      "query": "Hi doctor,My mother is 62 years old. She has purple-like patches on her arms and legs as shown in the attached picture. She said that she has it for over three to four years and these patches fade in a few days once they appear. My mother also has diabetes and hypertension. She is using some antibiotics for diabetes and hypertension. She also has substernal goiter and her biopsy was negative. I am attaching her blood and hormone results, which are in the normal range. Liver function tests were also normal. What are these fading purple-like patches?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.8984375,
+        "B_k20_t0.9": 0.421875,
+        "B_k20_t0.7": 0.7734375,
+        "B_k50_t0.5": 0.9453125
+      }
+    },
+    {
+      "query": "Hi doctor,My wife is suffering from peripartum cardiomyopathy for the past six months. She is taking beta blockers and diuretic medicine for the past four months. Her heart EF is 38 % with flat T in ECG reports. Her heart function is normal. How many days does it take to get cured?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.890625,
+        "B_k20_t0.9": 0.4140625,
+        "B_k20_t0.7": 0.8359375,
+        "B_k50_t0.5": 0.984375
+      }
+    },
+    {
+      "query": "Hi doctor,Recently, I did a full blood workup, and my eosinophil count, WBC, and B12 levels are high. I am a chronic sufferer of pouchitis. My creatinine and Bun levels are normal, like all other levels. I often take many supplements daily. Can you please help me? I am scared.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.875,
+        "B_k20_t0.9": 0.25,
+        "B_k20_t0.7": 0.71875,
+        "B_k50_t0.5": 0.96875
+      }
+    },
+    {
+      "query": "Hello doctor,My husband and I have been in a monogamous relationship (I believe) for 14 years. We had sexual partners before this. A few weeks into my first pregnancy, he and I have just broken out into HPV genital warts. Is it possible for warts to appear 14 years later? Is it more probable that my partner has been unfaithful?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.9296875,
+        "B_k20_t0.9": 0.3984375,
+        "B_k20_t0.7": 0.796875,
+        "B_k50_t0.5": 0.96875
+      }
+    },
+    {
+      "query": "Hello doctor,I am 27 years old and going to get married after three months. I am facing premature ejaculation. I have a bad dream after two or three days regular basis. So fearing about marriage as I have this problem. Semen maybe not thick enough and ejaculate after only 12 to 15 strokes. Need valuable suggestions from your end.",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.8359375,
+        "B_k20_t0.9": 0.3828125,
+        "B_k20_t0.7": 0.7265625,
+        "B_k50_t0.5": 0.8984375
+      }
+    },
+    {
+      "query": "Hello doctor,I am 23 years old. I am obese and have a family history of cardiac arrest. My father got cardiac arrest at the age of 53. I have consulted the local cardiologist and gone through ECG, echo, TMT, lipid, hs-CRP and other blood tests. All the tests were normal except heart rate, which was 110 and also high BP. I am taking Rosufit 10, Nebistar 5 and Cilaheart 10. Currently, I am feeling warm in the left side of my chest for a short span of time. Sometimes, I have slight pain in my left hand and feels like a pinch type of pain in the center of the chest when I inhale and exhale. Is it normal?",
+      "n_documents": 10,
+      "n_steps": 50,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.86,
+        "B_k20_t0.9": 0.3,
+        "B_k20_t0.7": 0.86,
+        "B_k50_t0.5": 0.96
+      }
+    },
+    {
+      "query": "Hi doctor,Is fibrous dysplasia a life-threatening disease or just a cosmetic problem in the upper mouth? Can CT scan show the overgrowth of bone in the upper mouth?",
+      "n_documents": 10,
+      "n_steps": 128,
+      "n_medical_positions": 0,
+      "medical_matches": [],
+      "trigger": {
+        "A": 0.90625,
+        "B_k20_t0.9": 0.4296875,
+        "B_k20_t0.7": 0.8515625,
+        "B_k50_t0.5": 0.9921875
+      }
+    }
+  ]
+}
