@@ -63,14 +63,33 @@ def test_every_conversation_carries_the_question():
         assert any(m["role"] == "user" and question in m["content"] for m in row)
 
 
-def test_prompts_use_a_system_role_as_the_model_set_assumes():
-    """dprag.config.MODELS may only list models that accept a system role."""
+def test_every_row_opens_with_a_system_message():
+    """The property MODELS is selected against: row 0 is always a system message.
+
+    This is the half that can be checked offline. The other half -- whether a
+    listed model's chat template actually accepts that role -- cannot be, because
+    a chat template is a mutable file in a model repository that is only known
+    once downloaded. Mistral's changed in July 2024; Gemma gained system-role
+    support between versions 2 and 4.
+
+    A name blacklist used to stand in for that check ("gemma" must not appear in
+    MODELS). It was removed with ADR 0004: it blocked google/gemma-4-12B-it, whose
+    template gives `system` its own turn, while it would have waved through any
+    other model that rejects the role. Guarding a behaviour by spelling is worse
+    than not guarding it, because it reads as protection.
+
+    Verification belongs where the real tokenizer is: see the preflight check
+    described in ADR 0004.
+    """
     rows = prompts.dprag_chat_batch(["d"], "q") + prompts.dual_instance_batch(["d"], "q")
     for row in rows:
         assert row[0]["role"] == "system"
-    assert not any("gemma" in m.lower() for m in MODELS), (
-        "Gemma's chat template rejects the system role these prompts emit"
-    )
+
+
+def test_model_set_is_three_distinct_models():
+    """Stage 3.2's cross-model phase needs all three slots filled (ADR 0004)."""
+    assert len(MODELS) == 3
+    assert len(set(MODELS)) == 3
 
 
 def test_summary_batch_mirrors_the_chat_batch_shape():

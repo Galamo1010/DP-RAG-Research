@@ -50,16 +50,23 @@ STRATEGY_B_TAU_GRID = [0.5, 0.7, 0.9, 1.0]   # 3 x 4 = 12 configs
 # Cross-model comparison set. Every model listed here must support a `system`
 # chat role, because dprag.prompts deliberately emits one format and does not
 # branch per model.
-# NOTE: the proposal names Gemma-2-9B-IT as the third model, but Gemma's chat
-# template rejects `system` ("System role not supported"). The replacement is
-# still UNDECIDED. Candidates that do support it:
-#   - mistralai/Mistral-7B-Instruct-v0.3   (comparable size, different architecture)
-#   - microsoft/Phi-3.5-mini-instruct      (the model upstream dp-rag defaults to)
-# Deviating from the proposal here has to be justified in the final report.
+#
+# The third slot has moved twice. The proposal names Gemma-2-9B-IT; ADR 0001
+# dropped it because Gemma 2's template rejects `system`; ADR 0003 named
+# Mistral-7B-Instruct-v0.3 on an unverified claim; ADR 0004 settles on Gemma 4,
+# whose template gives `system` its own turn -- verified against the repository's
+# chat_template.jinja before adoption. Gemma 4 also brings the proposal's own
+# model family back, so the report explains a version change rather than a
+# substitution.
+#
+# NOTE the vocabulary spread, which matters to Strategy B: k tokens are a share
+# of the vocabulary, and that share is what sets the candidate pool's relative
+# width. 128,256 / 152,064 / 262,144 spans 2.0x. Mistral's 32,768 would have made
+# it 4.6x. See ADR 0004.
 MODELS = [
-    "meta-llama/Llama-3.1-8B-Instruct",
-    "Qwen/Qwen2.5-14B-Instruct",
-    # TODO(stage3): third model, replacing google/gemma-2-9b-it
+    "meta-llama/Llama-3.1-8B-Instruct",   # Meta,    8.03B, vocab 128,256
+    "Qwen/Qwen2.5-14B-Instruct",          # Alibaba, 14.8B, vocab 152,064
+    "google/gemma-4-12B-it",              # Google,  ~12B,  vocab 262,144  (ADR 0004)
 ]
 
 # On-disk data (located by dprag.paths), downloaded 2026-07-02 from the ChatDoctor
