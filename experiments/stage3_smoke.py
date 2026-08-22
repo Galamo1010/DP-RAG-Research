@@ -1,6 +1,7 @@
-"""Stage 3.1 -- router verification, and the trajectory question it raised.
+"""Stage 3.1 -- router verification on real weights.
 
-Two jobs.
+Two jobs. The second one is why this file exists, and it is also the one whose
+first answer was wrong.
 
 MECHANICAL CHECKS. The router's unit tests run against a fake model, so they
 establish the routing logic and the epsilon accounting but say nothing about how a
@@ -11,17 +12,38 @@ row where generate() would. Both fail silently -- the cache ends up conditioned 
 a subtly wrong prefix and the answer merely comes out worse, which is
 indistinguishable from DP noise.
 
-THE TRAJECTORY COMPARISON. The first smoke run turned up something the mechanical
-checks were not looking for: strategy B_k20_t0.7 triggered on 16% of positions,
-against the 74.5% Stage 2.4 measured for the same configuration. The likely cause
-is that Stage 2 drove generation with the NoRAG instance, so its context stayed
-clean, whereas the router walks the routed trajectory -- and once a DP-sampled
-token lands, the context degrades, the two instances diverge further, more
-positions get paid, and more noise arrives. A feedback loop.
+THE TRAJECTORY COMPARISON, AND A CONCLUSION THAT WAS WITHDRAWN. Routed output came
+out as fluent-looking gibberish built from rare and non-English tokens. This script
+was extended to test the obvious reading: that a DP-sampled token lands, the
+context degrades, the two instances diverge, more positions get paid, more noise
+arrives -- a feedback loop that would make every trigger rate measured so far
+optimistic. A controlled comparison seemed to support it and the resulting gaps
+were reported as a finding.
 
-If that is right, every trigger rate measured so far is optimistic, which matters
-for Stage 3's predictions. So this measures both drivers on the SAME query with the
-SAME retrieved documents, isolating the trajectory as the only difference.
+**They were an artifact of a bug and have been withdrawn.** Do not cite any
+trajectory figure predating the fix in 8c95b14. The real cause was that the paid
+path never applied generate()'s sampling warpers, so with GenerationConfig's
+default top_k=50 ignored it sampled the full 128k vocabulary from a near-uniform
+distribution. The feedback story was wrong, but testing it is what produced the
+observation that broke it: the routed text was byte-identical at eps 10 and 40,
+which cannot happen if DP noise is what shapes the output.
+
+The comparison itself survives the correction, and on the fixed router it measures
+a real but much smaller trajectory effect (9 queries, 64 tokens):
+
+    strategy        NoRAG-driven   routed eps=10   routed eps=40
+    A                      0.868   0.842 (-0.026)  0.851 (-0.017)
+    B (k=20, tau=0.7)      0.705   0.569 (-0.136)  0.628 (-0.078)
+
+Strategy A is close to trajectory-independent; B is not, because set membership
+suffers more from a degraded context than a single argmax does.
+
+The full diagnostic chain, both bugs, and what to do differently are written up in
+docs/notes/router-verification.md. Its first lesson applies to this script: run the
+degenerate-strategy equivalence checks BEFORE anything else. A strategy that never
+agrees is plain DPRAG, so it can be compared byte-for-byte against dp_chat -- that
+check was placed last, found the bug immediately, and would have saved three rounds
+of GPU time and one withdrawn finding had it been placed first.
 
 Requires a CUDA GPU. Run:  uv run python experiments/stage3_smoke.py
 """
@@ -138,25 +160,25 @@ def main():
         if name == "always_agree":
             assert res.n_paid == 0 and res.epsilon_usage == 0.0
             assert res.emitted == res.norag_argmax[: len(res.emitted)]
-            # Decisive diagnostic. Nothing was paid, so no DP noise entered: this
-            # is the pure NoRAG instance speaking, seen through the router's own
-            # cache handling, with a k-document RAG row padded alongside it.
-            # Coherent here means the padding and position handling are sound and
-            # the garbling seen in routed output is the feedback loop. Garbled
-            # here means the NoRAG row is being corrupted by the length disparity
-            # between the two rows, and the trigger rates above cannot be trusted.
+            # Nothing was paid, so no DP noise entered: this is the pure NoRAG
+            # instance speaking, seen through the router's own cache handling,
+            # with a k-document RAG row padded alongside it -- rows whose prompts
+            # differ by roughly twentyfold in length. Coherent here means the
+            # padding and position handling are sound. Garbled here means the
+            # NoRAG row is being corrupted by that length disparity, and every
+            # trigger rate above is worthless.
             print(f"    (no DP noise -- pure NoRAG through the router, k="
                   f"{res.n_documents})")
             print(f"    {res.text[:160]}")
         else:
             assert res.n_paid == res.n_steps
-            # Paying at every position IS plain DPRAG, so this has to read like
-            # the baseline printed just below. The two run the same aggregation by
-            # different means -- dp_chat through generate(), this through the
-            # router's own loop -- so a divergence localises the fault to the paid
-            # path. The epsilon sweep points there already: cutting the noise
-            # threefold barely changed the routed text, which cannot happen if DP
-            # noise is what shapes it.
+            # Paying at every position IS plain DPRAG, so this has to match the
+            # baseline printed just below -- byte for byte, since both are seeded
+            # identically. The two run the same aggregation by different means:
+            # dp_chat through generate(), this through the router's own loop. A
+            # divergence localises the fault to the paid path, which is how the
+            # missing sampling warpers were found (8c95b14). This is the check
+            # that should run first; it was written last.
             print("    (every position paid -- this IS plain DPRAG)")
             print(f"    {res.text[:160]}")
 
