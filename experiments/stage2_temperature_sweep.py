@@ -40,6 +40,7 @@ from dprag.dual_instance import run_dual_instance, make_generation_config
 from dprag.strategies import strategy_a, make_strategy_b
 from dprag.config import ExperimentConfig
 from dprag import run_record
+from dprag.quality import rouge_l_f1
 
 # The proposal (2.1 step limit) sweeps {0.1, 0.3, 0.5, 0.7}; we add 1.0 (Stage 1's
 # baseline temperature) so the recommended value is measured, not extrapolated.
@@ -57,33 +58,6 @@ STRATEGIES = {
     "B_k10_t0.7": make_strategy_b(10, 0.7),
     "B_k20_t0.9": make_strategy_b(20, 0.9),
 }
-
-
-def _lcs_length(a: list[str], b: list[str]) -> int:
-    prev = [0] * (len(b) + 1)
-    for token_a in a:
-        curr = [0]
-        for j, token_b in enumerate(b, 1):
-            if token_a == token_b:
-                curr.append(prev[j - 1] + 1)
-            else:
-                curr.append(max(prev[j], curr[j - 1]))
-        prev = curr
-    return prev[-1]
-
-
-def rouge_l_f1(hypothesis: str, reference: str) -> float:
-    """LCS-based ROUGE-L F1 on whitespace tokens (lightweight proxy)."""
-    hyp = hypothesis.lower().split()
-    ref = reference.lower().split()
-    if not hyp or not ref:
-        return 0.0
-    lcs = _lcs_length(hyp, ref)
-    if lcs == 0:
-        return 0.0
-    precision = lcs / len(hyp)
-    recall = lcs / len(ref)
-    return 2 * precision * recall / (precision + recall)
 
 
 def main():

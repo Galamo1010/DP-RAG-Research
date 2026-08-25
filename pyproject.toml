@@ -18,6 +18,9 @@ dependencies = [
     "termcolor>=2.5.0",
     "dp-accounting>=0.4.4",
     "requests>=2.31.0",
+    # Stage 3.2 quality axis. Scoring runs offline on finished answers, so this
+    # never competes with generation for GPU. See dprag/quality.py.
+    "bert-score>=0.3.13",
 ]
 
 [dependency-groups]

@@ -104,6 +104,20 @@ class ExperimentConfig:
     max_retrieve: int = 10
     embed_batch_size: int = 32
 
+    # -- Quality scoring (Stage 3.2) ----------------------------------------
+    # A BERTScore number means nothing without the model that produced it: the
+    # same pair of texts scores differently under a different encoder, so this
+    # belongs in the record for the same reason vocab_min_count does. The value
+    # is what the BERTScore authors recommend over the package default
+    # (roberta-large) for correlation with human judgement; it costs nothing
+    # extra here because scoring runs offline, after generation.
+    bertscore_model: str = "microsoft/deberta-xlarge-mnli"
+    # Raw BERTScore sits in a narrow band -- two unrelated English medical
+    # passages still score above 0.8 -- so rescaling against the package's
+    # random-pairing baseline is what makes differences between configurations
+    # readable. Rescaled and raw scores are not comparable with each other.
+    bertscore_rescale: bool = True
+
     # -- Medical entity detection (Stage 2.5) -------------------------------
     # A word counts as clinical only if it occurs at least this often in the
     # corpus, which is what separates a real term from a DP-noise artifact
