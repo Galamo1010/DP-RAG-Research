@@ -65,6 +65,7 @@ from dprag.medical_flags import (
     flag_medical_tokens,
 )
 from dprag.router import Router
+from dprag import trace
 from dprag.strategies import make_strategy_b, strategy_a
 from dprag import run_record
 
@@ -141,42 +142,44 @@ def run_one_budget(bench, exp, eps: float, fixed: list[dict], vocabulary) -> dic
         started = time.time()
         row = {
             "query": item["query"], "n_documents": len(item["docs"]),
+            "docs": item["docs_trace"],
             "by_strategy": {},
         }
         for name, strategy in STRATEGIES.items():
             # Re-seed per generation so a strategy's trajectory does not depend on
             # how much randomness the strategies before it consumed.
             torch.manual_seed(exp.seed)
+            began = time.time()
             res = Router(bench.dp_model, strategy, cfg).generate(
                 item["docs"], item["query"]
             )
-            kinds, text, spans = flag_medical_tokens(
+            elapsed = time.time() - began
+            marks, text, spans = flag_medical_tokens(
                 tokenizer, res.emitted, vocabulary
             )
-            for position, kind in enumerate(kinds):
+            for position, mark in enumerate(marks):
+                kind = mark.kind if mark else None
                 bucket = counters[name][kind or "plain"]
                 bucket["total"] += 1
                 if res.is_free(position):
                     bucket["skipped"] += 1
-                    if (name == LOOSEST and kind is not None
+                    if (name == LOOSEST and mark is not None
                             and len(examples) < EXAMPLES_TO_KEEP):
                         lo, hi = max(0, position - 8), min(len(res.emitted), position + 8)
                         examples.append({
                             "query": item["query"][:120],
                             "position": position,
-                            "kind": kind,
+                            "kind": mark.kind,
+                            "is_first": mark.is_first,
                             "token": tokenizer.decode([res.emitted[position]]),
                             "context": tokenizer.decode(res.emitted[lo:hi]),
                             "jaccard": res.decisions[position].score,
                         })
-            row["by_strategy"][name] = {
-                "trigger_rate": res.trigger_rate,
-                "epsilon_usage": res.epsilon_usage,
-                "epsilon_savings": res.epsilon_savings,
-                "n_clinical_positions": sum(1 for k in kinds if k is not None),
-                "matches": [s.text for s in spans],
-                "text": text,
-            }
+            record = trace.strategy_trace(res, marks, elapsed)
+            trace.check(record)      # a violation means the router is broken
+            record["n_clinical_positions"] = sum(1 for m in marks if m is not None)
+            record["matches"] = [s.text for s in spans]
+            row["by_strategy"][name] = record
         per_query.append(row)
         clinical = sum(r["n_clinical_positions"] for r in row["by_strategy"].values())
         print(f"[{i+1:3}/{len(fixed)}] k={row['n_documents']:2} "
@@ -239,9 +242,15 @@ def main():
     # Retrieve ONCE per query and reuse across every strategy and budget.
     # Retrieval is stochastic, so retrieving per configuration would hand each one
     # a different document set and confound "strategy" with "different evidence".
+    store = bench.engine.pup_vector_store
     fixed = []
     for q in bench.queries():
-        fixed.append({"query": q.query, "docs": bench.retrieve(q.query)})
+        docs = bench.retrieve(q.query)
+        # Indices and similarities, not text: the corpus is reproducible from
+        # n_docs + corpus_seed, and without the scores "did retrieval find
+        # anything relevant?" costs a full re-embedding to ask afterwards.
+        fixed.append({"query": q.query, "docs": docs,
+                      "docs_trace": trace.retrieval_trace(store, q.query, docs)})
     with_docs = [f for f in fixed if f["docs"]]
     print(f"Retrieved once per query; {len(fixed) - len(with_docs)}/{len(fixed)} "
           f"got 0 documents (excluded -- the RAG instance collapses onto NoRAG "

@@ -63,6 +63,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from functools import lru_cache
+from typing import NamedTuple
 
 WORD_KIND = "word"
 PATTERN_KIND = "pattern"
@@ -141,6 +142,22 @@ PATTERNLIKE_PATTERN = re.compile(
     r"|\b\d+\s*/\s*\d+\s*(?:mmHg|mm\s*Hg)\b",
     re.IGNORECASE,
 )
+
+
+class TokenMark(NamedTuple):
+    """What a single token position carries, clinically.
+
+    `is_first` marks the token that opens its span, and it is the field the
+    safety analysis turns on. A multi-token drug name -- "Folliculitis" arriving
+    as F+ol+lic+ul+itis -- contributes five clinical positions, but only the
+    first is a decision: once "Follicul" is committed, English spelling leaves no
+    alternative to "itis", so both instances agree there whatever the documents
+    say. Counting all five inflates the medical skip rate against the ordinary
+    one, which is mostly single-token words. Serialises to ["word", true].
+    """
+
+    kind: str        # WORD_KIND or PATTERN_KIND
+    is_first: bool
 
 
 @dataclass(frozen=True)
@@ -232,14 +249,15 @@ def flag_medical_tokens(
     tokenizer,
     token_ids: list[int],
     vocabulary: frozenset[str] | set[str] | None = None,
-) -> tuple[list[str | None], str, list[MedicalSpan]]:
-    """Per-token kind labels for "this token sits inside a clinical phrase".
+) -> tuple[list[TokenMark | None], str, list[MedicalSpan]]:
+    """Per-token clinical marks for a generated sequence.
 
-    Returns (kinds, decoded_text, spans). `kinds[i]` is WORD_KIND, PATTERN_KIND or
-    None, rather than a bool, because the two kinds carry different confidence:
-    word-like matches have been vetted against a vocabulary and pattern-like ones
-    cannot be. Reporting them apart is what stops an unverifiable half from being
-    averaged into a headline number.
+    Returns (marks, decoded_text, spans). `marks[i]` is None or a TokenMark, so a
+    caller can separate three things that get conflated when a position is just a
+    bool: whether it is clinical, whether the evidence for that is vettable
+    (word-like) or not (pattern-like), and whether it is the position where the
+    model actually chose to say this rather than a continuation forced by
+    spelling.
     """
     if not token_ids:
         return [], "", []
@@ -248,7 +266,8 @@ def flag_medical_tokens(
     if not spans:
         return [None] * len(token_ids), text, []
 
-    kinds: list[str | None] = []
+    marks: list[TokenMark | None] = []
+    opened: set[tuple[int, int]] = set()
     for start, end in token_char_spans(tokenizer, token_ids):
         # A token counts if any part of it lies inside a span. Empty-width tokens
         # (some special tokens decode to nothing) never match. Word-like wins a
@@ -257,9 +276,10 @@ def flag_medical_tokens(
             s for s in spans if start < end and start < s.end and end > s.start
         ]
         if not overlapping:
-            kinds.append(None)
-        elif any(s.kind == WORD_KIND for s in overlapping):
-            kinds.append(WORD_KIND)
-        else:
-            kinds.append(PATTERN_KIND)
-    return kinds, text, spans
+            marks.append(None)
+            continue
+        span = next((s for s in overlapping if s.kind == WORD_KIND), overlapping[0])
+        key = (span.start, span.end)
+        marks.append(TokenMark(span.kind, key not in opened))
+        opened.add(key)
+    return marks, text, spans

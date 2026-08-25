@@ -9,6 +9,7 @@ import pytest
 from dprag.medical_flags import (
     PATTERN_KIND,
     WORD_KIND,
+    TokenMark,
     find_medical_spans,
     flag_medical_tokens,
     token_char_spans,
@@ -177,32 +178,53 @@ def test_token_spans_cover_the_text_contiguously():
 def test_subword_fragments_of_a_drug_name_are_all_flagged():
     """'metformin' arriving as met+form+in is the case token-level matching misses."""
     tok = _FakeTokenizer(["Take ", "met", "form", "in", " now"])
-    kinds, text, spans = flag_medical_tokens(tok, [0, 1, 2, 3, 4])
+    marks, text, spans = flag_medical_tokens(tok, [0, 1, 2, 3, 4])
     assert text == "Take metformin now"
     assert [s.text for s in spans] == ["metformin"]
-    assert kinds == [None, WORD_KIND, WORD_KIND, WORD_KIND, None]
+    assert marks == [None,
+                     TokenMark(WORD_KIND, True),
+                     TokenMark(WORD_KIND, False),
+                     TokenMark(WORD_KIND, False),
+                     None]
+
+
+def test_only_the_opening_token_of_a_span_is_marked_first():
+    """The distinction the safety analysis turns on.
+
+    Once "met"+"form" is committed there is no other English word to finish, so
+    both instances agree at "in" regardless of the documents. Counting that as a
+    clinical decision inflates the medical skip rate; is_first separates the one
+    position where a choice was made from the three that followed from it.
+    """
+    tok = _FakeTokenizer(["Take ", "met", "form", "in", " and ", "asp", "irin"])
+    marks, _, _ = flag_medical_tokens(tok, list(range(7)))
+    assert [m.is_first if m else None for m in marks] == [
+        None, True, False, False, None, True, False
+    ]
 
 
 def test_dose_split_across_number_and_unit_flags_both():
     tok = _FakeTokenizer(["Take ", "500", "mg", " daily"])
-    kinds, _, _ = flag_medical_tokens(tok, [0, 1, 2, 3])
-    assert kinds[1] == PATTERN_KIND and kinds[2] == PATTERN_KIND
-    assert kinds[0] is None
+    marks, _, _ = flag_medical_tokens(tok, [0, 1, 2, 3])
+    assert marks[1] == TokenMark(PATTERN_KIND, True)
+    assert marks[2] == TokenMark(PATTERN_KIND, False)
+    assert marks[0] is None
 
 
 def test_token_flags_respect_the_vocabulary():
     """The filter has to reach per-token labels, not only the span list."""
     tok = _FakeTokenizer(["seems ", "like ", "Tot", "osis"])
     ids = [0, 1, 2, 3]
-    assert flag_medical_tokens(tok, ids)[0] == [None, None, WORD_KIND, WORD_KIND]
+    assert flag_medical_tokens(tok, ids)[0] == [
+        None, None, TokenMark(WORD_KIND, True), TokenMark(WORD_KIND, False)]
     assert flag_medical_tokens(tok, ids, frozenset())[0] == [None] * 4
 
 
 def test_no_medical_content_flags_nothing():
     tok = _FakeTokenizer(["I ", "have ", "a ", "headache"])
-    kinds, text, spans = flag_medical_tokens(tok, [0, 1, 2, 3])
+    marks, text, spans = flag_medical_tokens(tok, [0, 1, 2, 3])
     assert spans == []
-    assert kinds == [None] * 4
+    assert marks == [None] * 4
 
 
 def test_empty_input():
@@ -212,5 +234,5 @@ def test_empty_input():
 def test_flags_align_one_to_one_with_tokens():
     tok = _FakeTokenizer(["Give ", "amox", "icillin", " 500", "mg"])
     ids = [0, 1, 2, 3, 4]
-    kinds, _, _ = flag_medical_tokens(tok, ids)
-    assert len(kinds) == len(ids)
+    marks, _, _ = flag_medical_tokens(tok, ids)
+    assert len(marks) == len(ids)
