@@ -86,6 +86,46 @@ def test_every_row_opens_with_a_system_message():
         assert row[0]["role"] == "system"
 
 
+def test_chat_template_date_is_pinned():
+    """Llama's template injects today's date unless the caller supplies one.
+
+    Left to itself it renders `Today Date: <today>` into the system message, so
+    the same conversation tokenises differently on different days and a seeded
+    run is not reproducible across dates -- exactly what ADR 0002 claims it is.
+    Measured on Llama-3.2-1B: three token values change and generation diverges
+    after roughly 60 characters, under greedy decoding and seeded sampling alike.
+
+    Pinned here rather than at each call site so it cannot be applied to some and
+    forgotten at others. Qwen and Phi templates ignore the keyword.
+    """
+    assert prompts.TEMPLATE_KWARGS["date_string"] == prompts.DATE_STRING
+    assert prompts.DATE_STRING, "an empty date still renders 'Today Date: ', which no model saw in training"
+
+
+def test_router_passes_the_pinned_date_to_the_tokenizer():
+    """The pin has to survive the call path that Stage 3 actually uses."""
+    import torch
+    from dprag.router import Router
+
+    seen = {}
+
+    class _Tok:
+        eos_token_id = 0
+        def apply_chat_template(self, conversations, **kwargs):
+            seen.update(kwargs)
+            n = len(conversations)
+            return {"input_ids": torch.zeros((n, 3), dtype=torch.long),
+                    "attention_mask": torch.ones((n, 3), dtype=torch.long)}
+
+    class _Model:
+        tokenizer = _Tok()
+        model = None
+
+    router = Router(_Model(), lambda a, b: None, None)
+    router._tokenize(prompts.norag_chat("q"))
+    assert seen.get("date_string") == prompts.DATE_STRING
+
+
 def test_model_set_is_three_distinct_models():
     """Stage 3.2's cross-model phase needs all three slots filled (ADR 0004)."""
     assert len(MODELS) == 3

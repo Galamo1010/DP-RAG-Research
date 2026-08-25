@@ -158,6 +158,7 @@ def run_dual_instance(
         return_dict=True,
         add_generation_prompt=True,
         continue_final_message=False,
+        **prompts.TEMPLATE_KWARGS,
     ).to("cuda")
     input_len = model_inputs["input_ids"].shape[-1]
 

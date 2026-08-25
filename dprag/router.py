@@ -243,6 +243,7 @@ class Router:
             return_dict=True,
             add_generation_prompt=True,
             continue_final_message=False,
+            **prompts.TEMPLATE_KWARGS,
         )
         # Move the tensors individually rather than calling .to() on the result:
         # tokenizers return a BatchEncoding, but nothing here needs that type.

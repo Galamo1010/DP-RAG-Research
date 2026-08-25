@@ -29,6 +29,33 @@ from __future__ import annotations
 Message = dict[str, str]
 Conversation = list[Message]
 
+# --- chat-template rendering ------------------------------------------------
+
+# Llama's chat template injects the current date when the caller does not supply
+# one:
+#
+#     {%- if not date_string is defined %}
+#         {%- set date_string = strftime_now("%d %b %Y") %}
+#     ...
+#     {{- "Today Date: " + date_string + <newline><newline> }}
+#
+# So the same conversation renders differently on different days, and a seeded
+# run is NOT reproducible across dates -- which is what ADR 0002 claims it is.
+# Measured on Llama-3.2-1B: three token values change (length is unaffected), and
+# generation diverges after roughly 60 characters under both greedy decoding and
+# seeded sampling.
+#
+# Pinned to the day Stage 1.2 and Stage 2.3/2.4 ran, so the consistency ceiling
+# those runs established stays reproducible. Qwen and Phi templates carry no
+# dynamic date and ignore this keyword; Gemma 4 is unverified -- check it in the
+# preflight when the model is first downloaded.
+DATE_STRING = "30 Jul 2026"
+
+# Spread into every apply_chat_template() call, so the pin cannot be applied at
+# some call sites and forgotten at others -- the failure this module exists to
+# prevent.
+TEMPLATE_KWARGS = {"date_string": DATE_STRING}
+
 # --- chat (question answering over retrieved documents) --------------------
 
 NORAG_SYSTEM = "You give a short response based on a predefined set documents."

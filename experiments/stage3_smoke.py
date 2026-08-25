@@ -92,6 +92,7 @@ def check_chunked_catch_up(dp_model, documents, question) -> bool:
         prompts.dprag_chat_batch(documents, question),
         tokenize=True, padding=True, return_tensors="pt",
         return_dict=True, add_generation_prompt=True, continue_final_message=False,
+        **prompts.TEMPLATE_KWARGS,
     )
     device = dp_model.model.device
     ids, mask = encoded["input_ids"].to(device), encoded["attention_mask"].to(device)
