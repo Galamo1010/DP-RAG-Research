@@ -99,9 +99,13 @@ class ExperimentConfig:
     retrieval_top_k: int | None = None
     min_score: float = -0.5
     max_score: float = 0.8
-    # 10, not the upstream default of 128: every experiment caps the k+1 batch
-    # here to keep generation affordable, and 128 was never actually used.
-    max_retrieve: int = 10
+    # 40, raised from 10 (ADR 0008). The DP threshold admits ~83 documents for the
+    # median query and `pup_retrieve` then draws max_retrieve of them AT RANDOM, so
+    # a cap of 10 discarded 88% of the qualifying evidence and delivered only 1.5
+    # of the true top-10. At 40 that becomes ~4.9. Not higher: measured peak VRAM
+    # is ~0.71 GB per document, so 69 -- the OOM ceiling -- sits at 93% of an 80 GB
+    # A100 with no room for a longer prompt, while 40 lands near 70%.
+    max_retrieve: int = 40
     embed_batch_size: int = 32
 
     # -- Quality scoring (Stage 3.2) ----------------------------------------

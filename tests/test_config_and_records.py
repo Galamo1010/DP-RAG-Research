@@ -42,12 +42,28 @@ def test_config_is_frozen():
 
 
 def test_defaults_match_what_experiments_actually_use():
-    """The old module claimed MAX_RETRIEVE=128 while every experiment used 10."""
+    """The old module claimed MAX_RETRIEVE=128 while every experiment used 10.
+
+    The value moved to 40 in ADR 0008 -- at 10 the DP threshold's ~83 qualifying
+    documents were cut to a random ten, delivering 1.5 of the true top-10. What
+    this test guards is unchanged: the number here is the number that runs.
+    """
     cfg = ExperimentConfig()
-    assert cfg.max_retrieve == 10
+    assert cfg.max_retrieve == 40
     assert cfg.temperature == 1.0
     assert cfg.delta == 1e-3
     assert cfg.eps_retrieval == 0.2
+
+
+def test_max_retrieve_leaves_headroom_below_the_measured_oom_ceiling():
+    """69 documents peaked at 79.4 GB of an 80 GB A100 and 73 failed outright.
+
+    Peak memory grows about 0.71 GB per document and moves with prompt length, so
+    a setting that survived three probe queries can still die at query 137 of a
+    two-hundred-query run. 40 sits near 70% of capacity; anything above ~55 does
+    not, and the ceiling itself is not a setting.
+    """
+    assert ExperimentConfig().max_retrieve <= 55
 
 
 def test_model_ids_are_locally_loadable_casing():
