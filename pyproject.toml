@@ -9,7 +9,7 @@ dependencies = [
     "numpy~=1.21",
     "torch~=2.4.0",
     "huggingface_hub~=0.26",
-    "transformers~=4.0",
+    "transformers>4.51",
     "protobuf>=5.28.3",
     "sentencepiece>=0.2.0",
     "faker>=30.8.2",

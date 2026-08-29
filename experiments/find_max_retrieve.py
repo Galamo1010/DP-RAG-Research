@@ -38,14 +38,14 @@ from dprag.router import Router
 from dprag.strategies import strategy_a
 
 # Bisection bounds. 30 survived preflight, 100 did not.
-KNOWN_GOOD = 30
-KNOWN_BAD = 100
+KNOWN_GOOD = 40
+KNOWN_BAD = 45
 # Stop when the bracket is this tight; finer than this is noise, since peak memory
 # moves with prompt length anyway.
 RESOLUTION = 5
 # Per probe. More queries is a better worst case and a slower search; three is
 # enough to catch a long-prompt query without turning this into an experiment.
-QUERIES_PER_PROBE = 3
+QUERIES_PER_PROBE = 20
 
 
 def drain():

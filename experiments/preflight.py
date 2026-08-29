@@ -182,7 +182,7 @@ def _routing_speed():
 
     queries = [q.query for q in bench.queries()]
     notes = []
-    for limit in (10, 100):
+    for limit in (10, 30):
         # Same store, no re-embedding: max_retrieve only caps the subsample drawn
         # from the documents that already cleared the DP threshold.
         store.max_retrieve = limit
