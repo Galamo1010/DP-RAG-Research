@@ -120,6 +120,8 @@ def main():
     if not paths_found:
         raise SystemExit("no stage3_* records found; run a phase first")
 
+    pareto_rows: list[tuple[str, float, float]] = []
+
     print(f"{'record':>34} | {'config':>12} | {'ROUGE-L':>16} | "
           f"{'lean':>8} | {'eps used':>8} | {'grounded':>9}")
     print("-" * 104)
@@ -133,7 +135,7 @@ def main():
 
         names = record.metric("strategies", [])
         for name in names:
-            quality, leans, productive = [], [], []
+            quality, leans, productive, triggers = [], [], [], []
             supported = total_spans = 0
             for row in record.per_item:
                 sr = row["by_strategy"].get(name)
@@ -146,6 +148,7 @@ def main():
                     lean = pole_lean(sr["text"], poles[row["query"]])
                     if lean is not None:
                         leans.append(lean)
+                triggers.append(sr.get("trigger_rate", 0.0))
                 p = paid_productivity(sr)
                 if p is not None:
                     productive.append(p)
@@ -155,12 +158,38 @@ def main():
                 total_spans += t
 
             m, h = ci95(quality)
+            if quality and triggers:
+                pareto_rows.append((name, st.mean(triggers), m))
             lean_txt = ("%+.4f" % st.mean(leans)) if leans else "  n/a"
             prod_txt = ("%.1f%%" % (100 * st.mean(productive))) if productive else " n/a"
             ground_txt = ("%d/%d" % (supported, total_spans)) if total_spans else "  0/0"
             print(f"{record.path.stem[:34]:>34} | {name:>12} | "
                   f"{m:.4f} +-{h:.4f} | {lean_txt:>8} | {prod_txt:>8} | "
                   f"{ground_txt:>9}")
+
+    if pareto_rows:
+        print()
+        print("=== trade-off: who is dominated ===")
+        print("A configuration is dominated when another gives at least as much")
+        print("epsilon saving AND at least as much quality. Dominated ones can be")
+        print("dropped without argument; the rest are the frontier, and choosing")
+        print("among THOSE is a judgement about how much quality a saving is worth.")
+        print()
+        print(f"{'config':>14} | {'trigger':>8} | {'ROUGE-L':>8} | verdict")
+        print("-" * 56)
+        for name, trig, qual in sorted(pareto_rows, key=lambda r: -r[1]):
+            dominated_by = [
+                other for other, t2, q2 in pareto_rows
+                if other != name and t2 >= trig and q2 >= qual
+                and (t2 > trig or q2 > qual)
+            ]
+            verdict = ("frontier" if not dominated_by
+                       else "dominated by " + ", ".join(dominated_by[:2]))
+            print(f"{name:>14} | {trig:>7.1%} | {qual:>8.4f} | {verdict}")
+        print()
+        print("Trigger rate stands in for epsilon saving here; the two are monotone")
+        print("but not proportional -- PLD composition is concave, so skipping 82%")
+        print("of positions saves 71% of the budget, not 82%.")
 
     print()
     print("ROUGE-L  mean with a 95% half-width. Overlapping intervals mean the two")

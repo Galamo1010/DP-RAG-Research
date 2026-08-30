@@ -32,10 +32,12 @@ strategy, which is the point.
 
 COST
 ----
-Sixteen runs of two hundred queries. At the measured 14-17 s per generation that is
-roughly fifteen hours, not the ten the ADR assumed at 10 s. Progress is
-checkpointed per query and completed runs are skipped, so this is safe to
-interrupt and safe to re-run.
+Five configurations across two budgets: ten runs of two hundred queries. At the
+measured 40.8 s per generation -- 20 queries at max_retrieve=40, not the 10 s ADR
+0003 assumed at max_retrieve=10 -- that is roughly twenty-one hours. Filling in the
+remaining two budgets would cost the same again; ADR 0009 records why the ends run
+first. Progress is checkpointed per query and completed runs are skipped, so this
+is safe to interrupt and safe to re-run.
 
     uv run python experiments/stage3_2_main.py
 """
@@ -44,19 +46,39 @@ import time
 
 from dprag import sweep
 from dprag.bench import Bench
-from dprag.config import EPS_TOTAL_GRID, ExperimentConfig
+from dprag.config import ExperimentConfig
 from dprag.dp_model import DPGenerationConfig
 from dprag.strategies import make_strategy_b, strategy_a
 
 EXPERIMENT = ExperimentConfig(n_queries=200)
 
-# Named here rather than inferred, because picking them is a human reading of
-# phase 1's trade-off curve. Change these after looking at the curve; the check
-# below only confirms the names appear in phase 1, not that they were wise.
+# Three Strategy B configurations spanning the strictness range, rather than the
+# two Pareto-optimal ones ADR 0003 assumed. The trade-off is the finding here, and
+# a trade-off needs a spread: two points near the frontier can sit almost on top of
+# each other and show no shape at all. Stage 2.5 ran exactly this spread and the
+# result was a clean dose-response -- quality rose monotonically as the paid
+# fraction fell -- which is the evidence for choosing it again.
+#
+# The strictness is the *measured* trigger rate, not tau. tau reads far looser than
+# it is (k=20, tau=0.9 demands 19 of 20 tokens) and k changes behaviour on its own,
+# so the labels below are what Stage 2.5 measured at max_retrieve=10.
+#
+# WARNING: those measurements predate ADR 0008. At max_retrieve=40 the DP
+# aggregation is sharper -- Stage 1.2's sampled consistency went from 0.11 to 0.75
+# on that change alone -- so these three may no longer span the range. Phase 1
+# exists to check that before twenty hours are spent on it.
 FINALISTS = {
-    "B_k20_t0.7": make_strategy_b(20, 0.7),
-    "B_k50_t0.5": make_strategy_b(50, 0.5),
+    "B_k20_t0.9": make_strategy_b(20, 0.9),   # strict:  19/20, triggered 14.4%
+    "B_k20_t0.7": make_strategy_b(20, 0.7),   # middle:  17/20, triggered 59.1%
+    "B_k50_t0.5": make_strategy_b(50, 0.5),   # loose:   34/50, triggered 95.3%
 }
+
+# The proposal specifies eps_total in {5, 10, 20, 40}. Only the two ends run first
+# (ADR 0009): they are where every existing measurement sits, so the new numbers
+# are directly comparable, and quality at eps=40 was already indistinguishable
+# across configurations -- the interior points are the least likely to carry
+# information. Extend this list to fill the grid in.
+EPSILON_GRID = [10, 40]
 
 SCREEN_RECORD = "stage3_1_screen_20q"
 
@@ -96,19 +118,19 @@ def main():
     check_finalists_were_screened()
 
     strategies = build_strategies()
-    total = len(EPS_TOTAL_GRID) * len(strategies)
+    total = len(EPSILON_GRID) * len(strategies)
     print(f"=== Stage 3.2 phase 2: main comparison | model={exp.gen_model} ===")
-    print(f"{len(strategies)} configurations x {len(EPS_TOTAL_GRID)} budgets "
+    print(f"{len(strategies)} configurations x {len(EPSILON_GRID)} budgets "
           f"x {exp.n_queries} queries | max_retrieve={exp.max_retrieve}")
     print(f"configurations: {list(strategies)}")
-    print(f"budgets: {EPS_TOTAL_GRID}")
+    print(f"budgets: {EPSILON_GRID}  (proposal asks for [5,10,20,40]; see ADR 0009)")
     print(f"~{total} runs; checkpointed per query, completed runs skipped\n",
           flush=True)
 
     bench = Bench.build(exp)
     began = time.time()
 
-    for eps in EPS_TOTAL_GRID:
+    for eps in EPSILON_GRID:
         dp_cfg = DPGenerationConfig(
             temperature=exp.temperature, max_new_tokens=exp.max_new_tokens,
             alpha=exp.alpha, omega=exp.omega, epsilon=float(eps), delta=exp.delta)
