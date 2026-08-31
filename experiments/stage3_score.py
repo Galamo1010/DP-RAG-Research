@@ -120,7 +120,7 @@ def main():
     if not paths_found:
         raise SystemExit("no stage3_* records found; run a phase first")
 
-    pareto_rows: list[tuple[str, float, float]] = []
+    pareto_rows: list[tuple[str, float, float, float]] = []
 
     print(f"{'record':>34} | {'config':>12} | {'ROUGE-L':>16} | "
           f"{'lean':>8} | {'eps used':>8} | {'grounded':>9}")
@@ -159,7 +159,7 @@ def main():
 
             m, h = ci95(quality)
             if quality and triggers:
-                pareto_rows.append((name, st.mean(triggers), m))
+                pareto_rows.append((name, st.mean(triggers), m, h))
             lean_txt = ("%+.4f" % st.mean(leans)) if leans else "  n/a"
             prod_txt = ("%.1f%%" % (100 * st.mean(productive))) if productive else " n/a"
             ground_txt = ("%d/%d" % (supported, total_spans)) if total_spans else "  0/0"
@@ -175,17 +175,31 @@ def main():
         print("dropped without argument; the rest are the frontier, and choosing")
         print("among THOSE is a judgement about how much quality a saving is worth.")
         print()
-        print(f"{'config':>14} | {'trigger':>8} | {'ROUGE-L':>8} | verdict")
-        print("-" * 56)
-        for name, trig, qual in sorted(pareto_rows, key=lambda r: -r[1]):
+        print(f"{'config':>14} | {'trigger':>8} | {'ROUGE-L':>16} | verdict")
+        print("-" * 66)
+        for name, trig, qual, hw in sorted(pareto_rows, key=lambda r: -r[1]):
+            # Dominance needs the quality gap to clear both intervals. Judging it
+            # on point estimates alone declared A "dominated" over a 0.007 gap
+            # while the half-widths were 0.011 -- a verdict the data cannot carry.
             dominated_by = [
-                other for other, t2, q2 in pareto_rows
-                if other != name and t2 >= trig and q2 >= qual
-                and (t2 > trig or q2 > qual)
+                other for other, t2, q2, h2 in pareto_rows
+                if other != name and t2 >= trig and (q2 - h2) > (qual + hw)
             ]
-            verdict = ("frontier" if not dominated_by
-                       else "dominated by " + ", ".join(dominated_by[:2]))
-            print(f"{name:>14} | {trig:>7.1%} | {qual:>8.4f} | {verdict}")
+            if dominated_by:
+                verdict = "dominated by " + ", ".join(dominated_by[:2])
+            else:
+                beaten_on_quality = any(
+                    (q2 - h2) > (qual + hw) for o, _, q2, h2 in pareto_rows if o != name
+                )
+                verdict = ("frontier" if not beaten_on_quality
+                           else "frontier (kept: saves more)")
+            print(f"{name:>14} | {trig:>7.1%} | {qual:.4f} +-{hw:.4f} | {verdict}")
+        print()
+        print("A configuration is only called dominated when the other's quality")
+        print("advantage clears BOTH confidence intervals. Where quality cannot be")
+        print("separated -- which is the usual case at screening sample sizes --")
+        print("only the trigger axis carries information, and everything sits on")
+        print("the frontier. That is an honest 'undetermined', not a tie.")
         print()
         print("Trigger rate stands in for epsilon saving here; the two are monotone")
         print("but not proportional -- PLD composition is concave, so skipping 82%")

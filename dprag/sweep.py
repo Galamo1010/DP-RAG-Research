@@ -137,6 +137,17 @@ def routed_sweep(
             row["by_strategy"][strategy_name] = record
 
         rows.append(row)
+        # Printed every query, not every checkpoint. A twenty-hour phase whose log
+        # stays blank for ninety minutes is indistinguishable from a hung one, and
+        # this project has already spent an hour and a half watching a silent file.
+        # Run with `python -u` or the buffering hides it anyway.
+        triggers = " ".join(
+            "%s=%.2f" % (n, r["trigger_rate"]) for n, r in row["by_strategy"].items()
+        )
+        print("[%3d/%3d] k=%2d  %.1fs  %s"
+              % (len(rows), len(questions), row["n_documents"],
+                 sum(r["seconds"] for r in row["by_strategy"].values()), triggers),
+              flush=True)
         if on_query:
             on_query(i, row)
         if len(rows) % checkpoint_every == 0:
