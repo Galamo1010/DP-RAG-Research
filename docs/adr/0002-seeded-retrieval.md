@@ -75,3 +75,12 @@ that is reproducible).
 **The archived pre-seed results cannot be reproduced.** Runs in `results/archive/`
 predate this change; `results/archive/README.md` records that they are kept as a
 development record and are to be re-run rather than migrated.
+
+## Amended by ADR 0010
+
+The claim above is about reproducing *a run*. It does not make two runs
+comparable: the generators advance with every retrieval, so a second
+configuration asking about the same query draws different documents. Stage 3.2
+measured zero of 173 queries seeing the same document set between two
+configurations. [ADR 0010](0010-retrieval-per-query-seed.md) keys the generator to
+the query text instead.

@@ -107,6 +107,14 @@ def routed_sweep(
         if question in done:
             continue
 
+        # Make retrieval a function of (query, seed) rather than of how many
+        # retrievals have happened. Without this, each configuration in a phase
+        # runs its own sweep, the generator advances between them, and the second
+        # one to ask about a query draws different documents from the first --
+        # measured at 0.234 mean Jaccard overlap, with zero of 173 queries seeing
+        # the same set. Every quality comparison then confounds the strategy with
+        # the evidence, which is the one thing the phase must not do.
+        store.reseed_for(question)
         documents = store.pup_retrieve(question)
         if not documents:
             # DP retrieval legitimately returning nothing: the RAG instance

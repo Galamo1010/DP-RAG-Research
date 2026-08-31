@@ -1,4 +1,5 @@
 from functools import cached_property
+import hashlib
 import random
 from typing import Any
 from dataclasses import dataclass
@@ -82,6 +83,38 @@ be presented as a DP-protected release. See docs/adr/0002-seeded-retrieval.md.
         # the original behaviour exactly.
         self._np_rng = np.random.default_rng(config.seed) if config.seed is not None else np.random
         self._py_rng = random.Random(config.seed) if config.seed is not None else random
+
+    def reseed_for(self, query: str) -> None:
+        """Put both generators in a state derived from `query` and the base seed.
+
+        Sequential draws make a run reproducible, which is what ADR 0002 set out
+        to fix. They do not make two runs comparable: the generator advances with
+        every retrieval, so the second configuration to ask about a given query
+        draws a different document set from the first. Stage 3.2 measured that at
+        a mean Jaccard overlap of 0.234 across 173 queries -- zero of them saw the
+        same documents -- which confounds "different strategy" with "different
+        evidence" in exactly the comparison the phase exists to make.
+
+        Deriving the state from the query instead makes retrieval a function of
+        (query, seed) alone, so every configuration sees identical evidence and a
+        difference between them is attributable to the strategy.
+
+        `hash()` is not used: it is salted per process, so the same query would
+        reseed differently on each run and the guarantee would hold only within
+        one process. sha256 of the query text is stable everywhere.
+
+        This is experimental control, not privacy. The DP guarantee is a property
+        of the mechanism's output distribution over its own randomness; fixing
+        which draw is observed leaves that distribution untouched. The caveat from
+        ADR 0002 stands unchanged: a seeded output must never be presented as a
+        DP-protected release.
+        """
+        if self.seed is None:
+            return          # unseeded stores keep the original global-RNG behaviour
+        digest = hashlib.sha256(f"{self.seed}:{query}".encode("utf-8")).digest()
+        state = int.from_bytes(digest[:8], "big")
+        self._np_rng = np.random.default_rng(state)
+        self._py_rng = random.Random(state)
 
     @cached_property
     def model(self) -> PreTrainedModel:

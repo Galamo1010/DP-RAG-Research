@@ -222,3 +222,89 @@ def test_reproducibility_holds_across_seeds(seed):
         _FakeStore(_config(seed), scores).pup_retrieve("q")
         == _FakeStore(_config(seed), scores).pup_retrieve("q")
     )
+
+
+# --------------------------------------------------------------------------
+# retrieval must be a function of (query, seed), not of call order
+# --------------------------------------------------------------------------
+
+def _tiny_store(seed=42):
+    """A store with hand-made embeddings: no model, no corpus, no GPU."""
+    import torch
+
+    from dprag.pup_vector_store import PUPVectorStore, PUPVectorStoreConfig
+
+    store = PUPVectorStore(PUPVectorStoreConfig(
+        top_p=0.02, epsilon=0.2, max_retrieve=5, seed=seed))
+    for i in range(40):
+        store.add(f"document {i}")
+    # Deterministic stand-in for the encoder: distinct, normalised vectors.
+    vecs = torch.eye(40, 8)[:, :8].clone()
+    vecs[:, 0] = torch.linspace(0.1, 1.0, 40)
+    vecs = vecs / vecs.norm(dim=1, keepdim=True)
+    store._embeddings = vecs
+    store.encode = lambda text: vecs[len(text) % 40].unsqueeze(0)
+    return store
+
+
+def test_the_same_query_retrieves_the_same_documents_across_runs():
+    """The property Stage 3.2's comparison depends on.
+
+    Each configuration runs its own sweep, so without this the generator has
+    advanced by the time the second one asks about a given query and it draws a
+    different document set. Measured on the real corpus at 0.234 mean Jaccard
+    overlap -- zero of 173 queries saw the same documents -- which makes every
+    quality difference a mixture of the strategy and the evidence.
+    """
+    question = "Is this contagious?"
+
+    first = _tiny_store()
+    first.reseed_for(question)
+    a = first.pup_retrieve(question)
+
+    # A second store that has already served other queries, as the second
+    # configuration's sweep would have.
+    second = _tiny_store()
+    for other in ("something else", "and another", "a third"):
+        second.reseed_for(other)
+        second.pup_retrieve(other)
+    second.reseed_for(question)
+    b = second.pup_retrieve(question)
+
+    assert set(a) == set(b), "same query and seed must give the same documents"
+
+
+def test_without_reseeding_call_order_changes_the_draw():
+    """Pins the failure the reseed exists to prevent, so it cannot come back."""
+    question = "Is this contagious?"
+
+    fresh = _tiny_store()
+    a = fresh.pup_retrieve(question)
+
+    used = _tiny_store()
+    for other in ("something else", "and another", "a third"):
+        used.pup_retrieve(other)
+    b = used.pup_retrieve(question)
+
+    assert set(a) != set(b), (
+        "if these now match, sequential draws became order-independent and this "
+        "test no longer pins anything -- check before deleting it"
+    )
+
+
+def test_different_queries_still_draw_differently():
+    """Reseeding must not collapse retrieval into one fixed answer."""
+    store = _tiny_store()
+    draws = []
+    for q in ("first question", "second question here", "a third one entirely"):
+        store.reseed_for(q)
+        draws.append(tuple(sorted(store.pup_retrieve(q))))
+    assert len(set(draws)) > 1
+
+
+def test_an_unseeded_store_is_left_alone():
+    """seed=None keeps the original global-RNG behaviour, which ADR 0002 preserved."""
+    store = _tiny_store(seed=None)
+    before = store._py_rng
+    store.reseed_for("anything")
+    assert store._py_rng is before
