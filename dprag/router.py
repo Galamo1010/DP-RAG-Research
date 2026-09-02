@@ -124,6 +124,28 @@ def _composed_epsilon(token_epsilon: float, steps: int, delta: float) -> float:
     return pld.get_epsilon_for_delta(delta)
 
 
+def _supports_logits_to_keep(model) -> bool:
+    """Whether this model's forward accepts `logits_to_keep`.
+
+    transformers named it `num_logits_to_keep` before 4.49. Rather than pin a
+    version, ask the model: an unsupported keyword raises, and a silently ignored
+    one would leave the memory problem in place with no signal that it had.
+    """
+    import inspect
+
+    try:
+        params = inspect.signature(model.forward).parameters
+    except (AttributeError, TypeError, ValueError):
+        # No inspectable forward -- test doubles, and anything else that is
+        # merely callable. Say no: passing an unexpected keyword to such an
+        # object is worse than computing logits the model was going to compute
+        # anyway, and every real transformers model has a forward to inspect.
+        return False
+    return "logits_to_keep" in params or any(
+        p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values()
+    )
+
+
 class _Stream:
     """One batch of conversations plus the KV cache it has built up.
 
@@ -138,6 +160,7 @@ class _Stream:
         self._mask = attention_mask
         self._cache = None
         self.primed = False
+        self._last_only = _supports_logits_to_keep(model)
 
     def _forward(self, ids: Tensor, mask: Tensor) -> Tensor:
         # position_ids must be derived from the attention mask, not left to the
@@ -149,6 +172,14 @@ class _Stream:
         positions = mask.long().cumsum(-1) - 1
         positions = positions.masked_fill(mask == 0, 1)
         positions = positions[:, -ids.shape[1]:]
+        # Only the final position is ever read (see the return below), but the
+        # model computes lm_head over every position of the prompt unless told
+        # otherwise. At k+1 = 41 rows, a 393-token prompt and gemma-4's 262,144
+        # vocabulary that is a 16.9 GB tensor -- built, softcapped into another
+        # copy, and discarded. It ran an 80 GB A100 out of memory on Phase 3's
+        # fifth query. Asking for one position makes it 43 MB, and the output is
+        # unchanged because the kept position is exactly the one returned.
+        extra = {"logits_to_keep": 1} if self._last_only else {}
         with torch.no_grad():
             out = self.model(
                 input_ids=ids,
@@ -156,6 +187,7 @@ class _Stream:
                 position_ids=positions,
                 past_key_values=self._cache,
                 use_cache=True,
+                **extra,
             )
         self._cache = out.past_key_values
         self._mask = mask
