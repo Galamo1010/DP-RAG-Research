@@ -54,7 +54,18 @@ So both poles decode greedily, matching the router's free path. `temperature` is
 therefore unset: it does nothing under argmax, and passing it only invites a
 warning. The RAG pole still receives every document; only the token rule changed.
 
-    uv run python experiments/stage3_poles.py [source_record_name]
+ONE SET OF POLES PER MODEL
+--------------------------
+The poles are what the *model* says with and without the documents, so they are as
+model-specific as the routed answers they locate. A second model needs its own.
+
+The documents, however, do not: retrieval embeds with the same sentence encoder
+whatever the generator is, and `reseed_for` keys it to (query, seed) alone. So a
+second model reuses the first run's recorded indices and retrieves nothing --
+which also means both models are located against the same evidence.
+
+    uv run python experiments/stage3_poles.py [source_record_name] [gen_model]
+    PYTHONPATH=. .venv-gemma/bin/python experiments/stage3_poles.py         stage3_2_main_baseline_eps40 google/gemma-4-12B-it
 """
 
 import sys
@@ -103,6 +114,8 @@ def generate_one(dp_model, conversation, generation_config) -> str:
 def main():
     source = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_SOURCE
     exp = EXPERIMENT
+    if len(sys.argv) > 2:
+        exp = exp.with_(gen_model=sys.argv[2])
 
     source_path = paths.results_dir() / f"{source}.json"
     if not source_path.exists():
@@ -167,6 +180,7 @@ def main():
         exp,
         metrics={
             "source_record": source,
+            "gen_model": exp.gen_model,
             "n_queries": len(rows),
             "poles": "norag_text = no documents; rag_text = all documents, no DP",
             "note": (
@@ -177,7 +191,10 @@ def main():
             ),
         },
         per_item=rows,
-        filename=f"stage3_poles_{len(rows)}q",
+        # The model goes in the name because two models produce the same number of
+        # rows: without it the second run silently overwrites the first, and the
+        # only symptom is a lean measured against the wrong model's poles.
+        filename=f"stage3_poles_{exp.gen_model.split('/')[-1]}_{len(rows)}q",
     )
     print(f"\nSaved -> {out}")
     print("Locate routed output against these with experiments/stage3_score.py.")

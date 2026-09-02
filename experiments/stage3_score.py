@@ -50,13 +50,25 @@ def ci95(values: list[float]) -> tuple[float, float]:
     return st.mean(values), 1.96 * st.stdev(values) / math.sqrt(len(values))
 
 
-def load_poles() -> dict[str, dict]:
-    """query -> {norag_text, rag_text}. Empty if the poles have not been run."""
-    found = sorted(glob.glob(str(paths.results_dir() / f"{POLES_GLOB}.json")))
-    if not found:
-        return {}
-    record = run_record.load(found[-1])
-    return {r["query"]: r for r in record.per_item}
+def load_poles() -> dict[str, dict[str, dict]]:
+    """gen_model -> query -> {norag_text, rag_text}.
+
+    Keyed by model, not by filename. The poles say what a *model* writes with and
+    without the documents, so locating one model's answers against another model's
+    poles is meaningless -- and it fails silently, producing a plausible lean
+    rather than an error. An earlier version took the alphabetically last poles
+    file, which was correct only while exactly one existed.
+    """
+    by_model: dict[str, dict[str, dict]] = {}
+    for path in sorted(glob.glob(str(paths.results_dir() / f"{POLES_GLOB}.json"))):
+        record = run_record.load(path)
+        model = record.metric("gen_model") or record.param("gen_model")
+        if model is None:
+            print(f"!! {record.path.stem} names no model and cannot be matched to "
+                  "a run; re-run experiments/stage3_poles.py to regenerate it")
+            continue
+        by_model[model] = {r["query"]: r for r in record.per_item}
+    return by_model
 
 
 def pole_lean(text: str, poles: dict) -> float | None:
@@ -109,8 +121,8 @@ def main():
     exp = ExperimentConfig()
     refs = {q.query: q.reference
             for q in load_queries(n=exp.n_queries, seed=exp.query_seed)}
-    poles = load_poles()
-    if not poles:
+    poles_by_model = load_poles()
+    if not poles_by_model:
         print("!! No poles record found. Quality numbers below cannot be told apart")
         print("!! from 'we did less RAG'. Run experiments/stage3_poles.py.\n")
 
@@ -120,7 +132,11 @@ def main():
     if not paths_found:
         raise SystemExit("no stage3_* records found; run a phase first")
 
-    pareto_rows: list[tuple[str, float, float, float]] = []
+    # Keyed by model. Pareto dominance compares configurations, and two
+    # configurations are comparable only when the model underneath them is the
+    # same: pooling models lets a stronger model's baseline "dominate" a weaker
+    # model's strategy A, which says nothing at all about the pre-filter.
+    pareto_by_model: dict[str, list[tuple[str, float, float, float]]] = {}
 
     print(f"{'record':>34} | {'config':>12} | {'ROUGE-L':>16} | "
           f"{'lean':>8} | {'eps used':>8} | {'grounded':>9}")
@@ -132,6 +148,11 @@ def main():
         if key not in corpus_cache:
             corpus_cache[key] = load_corpus(limit=key[0], sample_seed=key[1])
         corpus = corpus_cache[key]
+
+        model = record.param("gen_model", "unknown")
+        poles = poles_by_model.get(model, {})
+        if poles_by_model and not poles:
+            print(f"!! no poles for {model}; lean unavailable for {record.path.stem}")
 
         names = record.metric("strategies", [])
         for name in names:
@@ -159,7 +180,8 @@ def main():
 
             m, h = ci95(quality)
             if quality and triggers:
-                pareto_rows.append((name, st.mean(triggers), m, h))
+                pareto_by_model.setdefault(model, []).append(
+                    (name, st.mean(triggers), m, h))
             lean_txt = ("%+.4f" % st.mean(leans)) if leans else "  n/a"
             prod_txt = ("%.1f%%" % (100 * st.mean(productive))) if productive else " n/a"
             ground_txt = ("%d/%d" % (supported, total_spans)) if total_spans else "  0/0"
@@ -167,9 +189,9 @@ def main():
                   f"{m:.4f} +-{h:.4f} | {lean_txt:>8} | {prod_txt:>8} | "
                   f"{ground_txt:>9}")
 
-    if pareto_rows:
+    for model, pareto_rows in sorted(pareto_by_model.items()):
         print()
-        print("=== trade-off: who is dominated ===")
+        print(f"=== trade-off: who is dominated | {model} ===")
         print("A configuration is dominated when another gives at least as much")
         print("epsilon saving AND at least as much quality. Dominated ones can be")
         print("dropped without argument; the rest are the frontier, and choosing")
@@ -204,6 +226,9 @@ def main():
         print("Trigger rate stands in for epsilon saving here; the two are monotone")
         print("but not proportional -- PLD composition is concave, so skipping 82%")
         print("of positions saves 71% of the budget, not 82%.")
+        print("One table per model. Configurations under different models are never")
+        print("compared here: a stronger model scores higher everywhere, which would")
+        print("read as its baseline dominating another model's strategy.")
 
     print()
     print("ROUGE-L  mean with a 95% half-width. Overlapping intervals mean the two")
