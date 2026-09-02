@@ -30,7 +30,7 @@ import traceback
 
 import torch
 
-from dprag import run_record
+from dprag import paths, run_record
 from dprag.bench import Bench
 from dprag.config import ExperimentConfig
 from dprag.dp_model import DPGenerationConfig
@@ -52,7 +52,33 @@ def gb(n: int) -> float:
     return n / 1024 ** 3
 
 
-def probe(model_id: str, base: ExperimentConfig) -> dict:
+def worst_case_queries(base: ExperimentConfig, n: int, source: str) -> list[str]:
+    """The n queries whose retrieved documents are longest, from a finished run.
+
+    Peak memory is set by the longest prompt in the batch, so probing the first n
+    queries measures whichever prompts happen to come first. Phase 3 learned this
+    the expensive way: gemma-4 cleared three queries at max_retrieve=40 and ran an
+    80 GB card out of memory on the fifth. Ranking by prompt size makes the probe
+    a worst case rather than a draw.
+
+    The documents come from a finished record's corpus indices, so this costs no
+    retrieval and no GPU -- and `reseed_for` means the probe will retrieve exactly
+    the same documents when it runs these queries for real.
+    """
+    from dprag.chatdoctor import load_corpus
+
+    record = run_record.load(paths.results_dir() / f"{source}.json")
+    corpus = load_corpus(limit=record.param("n_docs", base.n_docs),
+                         sample_seed=record.param("corpus_seed", base.corpus_seed))
+    sized = sorted(
+        record.per_item,
+        key=lambda r: -sum(len(corpus[i]) for i, _ in r.get("docs", []) if i < len(corpus)),
+    )
+    return [r["query"] for r in sized[:n]]
+
+
+def probe(model_id: str, base: ExperimentConfig,
+          queries: list | None = None) -> dict:
     """Load one model, generate a few routed answers, report what broke if any."""
     exp = base.with_(gen_model=model_id)
     row: dict = {
@@ -103,13 +129,15 @@ def probe(model_id: str, base: ExperimentConfig) -> dict:
     router = Router(bench.dp_model, strategy_a, dp_cfg)
 
     seconds, ks = [], []
+    chosen = queries if queries is not None else bench.queries(N_QUERIES)
     try:
-        for q in bench.queries(N_QUERIES):
+        for q in chosen:
             # Same seeding as the sweep, so the documents are the ones Phase 3
             # would actually see and the peak memory is not measured on a
             # conveniently short prompt.
-            store.reseed_for(q.query)
-            documents = store.pup_retrieve(q.query)
+            question = q.query if hasattr(q, "query") else q
+            store.reseed_for(question)
+            documents = store.pup_retrieve(question)
             if not documents:
                 continue
             torch.manual_seed(exp.seed)
