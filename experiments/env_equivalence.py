@@ -112,20 +112,42 @@ def compare(this_tag: str, rows: list[dict]) -> None:
                   f"({len(mine['emitted'])} vs {len(yours['emitted'])} tokens) | "
                   f"norag {'identical' if d_norag < 0 else f'diverge at {d_norag}'}")
 
-        # A single verdict line, because this exists to answer one question.
-        all_same = all(
+        # Three verdicts, not two. An earlier version checked only documents and
+        # emitted tokens, and reported "byte-identical" on a sample whose NoRAG
+        # argmax had already diverged -- a stronger claim than the data carried.
+        shared = [r for r in rows if r["query"] in theirs]
+        docs_same = all(
             [i for i, _ in r["docs"]] == [i for i, _ in theirs[r["query"]]["docs"]]
-            and first_difference(r["emitted"], theirs[r["query"]]["emitted"]) < 0
-            for r in rows if r["query"] in theirs
-        )
+            for r in shared)
+        emit_same = all(
+            first_difference(r["emitted"], theirs[r["query"]]["emitted"]) < 0
+            for r in shared)
+        positions = sum(len(r["norag_argmax"]) for r in shared)
+        norag_diverged = sum(
+            1 for r in shared
+            if first_difference(r["norag_argmax"],
+                                theirs[r["query"]]["norag_argmax"]) >= 0)
+
         print()
-        if all_same:
-            print("  VERDICT: byte-identical. The environments are interchangeable")
-            print("  for generation, so gemma's results need no separate caveat.")
+        if not docs_same or not emit_same:
+            print("  VERDICT: the outputs differ. gemma's absolute numbers cannot be")
+            print("  listed beside Llama's and Qwen's; only each model's improvement")
+            print("  over its own baseline is comparable. Say so in the report.")
+        elif norag_diverged == 0:
+            print(f"  VERDICT: identical across all {positions} positions -- documents,")
+            print("  emitted tokens and NoRAG argmax. Nothing observed distinguishes")
+            print("  the environments, on this sample.")
         else:
-            print("  VERDICT: they differ. gemma's absolute numbers cannot be listed")
-            print("  beside Llama's and Qwen's; only each model's improvement over")
-            print("  its own baseline is comparable. Say so in the report.")
+            print(f"  VERDICT: emitted tokens match, but NoRAG argmax diverges in")
+            print(f"  {norag_diverged} of {len(shared)} answers. The logits are NOT")
+            print("  identical: floating-point accumulation differs between the")
+            print("  library versions. Here the divergence landed on paid positions,")
+            print("  where the DP aggregation overrode it, so the answer survived.")
+            print("  On a free position it would have changed the token and the")
+            print("  trajectory after it. Matching outputs on a sample this small is")
+            print("  therefore not evidence that the environments are interchangeable")
+            print("  -- it is evidence that the difference is small and did not")
+            print("  happen to surface. Report it as a measured, bounded difference.")
 
 
 def main():
