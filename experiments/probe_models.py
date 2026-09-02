@@ -72,6 +72,11 @@ def probe(model_id: str, base: ExperimentConfig) -> dict:
     began = time.time()
     try:
         bench = Bench.build(exp)
+        # `DPModel.model` is a cached_property, so Bench.build does not actually
+        # load the weights -- the first attribute access does. Touch it here or a
+        # download or version failure escapes this try block and crashes the probe
+        # instead of being reported as the load failure it is.
+        bench.dp_model.model
     except Exception as e:
         # Loading is where the packaging problem shows up. Keep the type: a
         # transformers version error and an out-of-disk error need different fixes.
