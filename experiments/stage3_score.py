@@ -132,11 +132,16 @@ def main():
     if not paths_found:
         raise SystemExit("no stage3_* records found; run a phase first")
 
-    # Keyed by model. Pareto dominance compares configurations, and two
-    # configurations are comparable only when the model underneath them is the
-    # same: pooling models lets a stronger model's baseline "dominate" a weaker
-    # model's strategy A, which says nothing at all about the pre-filter.
-    pareto_by_model: dict[str, list[tuple[str, float, float, float]]] = {}
+    # Keyed by (model, epsilon). Pareto dominance compares configurations, and two
+    # configurations are comparable only under identical conditions. Pooling models
+    # lets a stronger model's baseline "dominate" a weaker model's strategy A;
+    # pooling budgets lets a configuration at eps=40 dominate one at eps=10, which
+    # says only that more budget buys more. Neither is a statement about the
+    # pre-filter. Sample size is carried per row rather than split on, because a
+    # screening run and a main run measure the same quantity at different
+    # precision -- worth seeing side by side, as long as the n is visible.
+    Row = tuple[str, float, float, float, int]
+    pareto_by_group: dict[tuple[str, float], list[Row]] = {}
 
     print(f"{'record':>34} | {'config':>12} | {'ROUGE-L':>16} | "
           f"{'lean':>8} | {'eps used':>8} | {'grounded':>9}")
@@ -180,8 +185,9 @@ def main():
 
             m, h = ci95(quality)
             if quality and triggers:
-                pareto_by_model.setdefault(model, []).append(
-                    (name, st.mean(triggers), m, h))
+                key = (model, float(record.param("gen_epsilon", 0.0)))
+                pareto_by_group.setdefault(key, []).append(
+                    (name, st.mean(triggers), m, h, len(quality)))
             lean_txt = ("%+.4f" % st.mean(leans)) if leans else "  n/a"
             prod_txt = ("%.1f%%" % (100 * st.mean(productive))) if productive else " n/a"
             ground_txt = ("%d/%d" % (supported, total_spans)) if total_spans else "  0/0"
@@ -189,33 +195,35 @@ def main():
                   f"{m:.4f} +-{h:.4f} | {lean_txt:>8} | {prod_txt:>8} | "
                   f"{ground_txt:>9}")
 
-    for model, pareto_rows in sorted(pareto_by_model.items()):
+    for (model, eps), pareto_rows in sorted(pareto_by_group.items()):
         print()
-        print(f"=== trade-off: who is dominated | {model} ===")
+        print(f"=== trade-off: who is dominated | {model} | eps={eps:g} ===")
         print("A configuration is dominated when another gives at least as much")
         print("epsilon saving AND at least as much quality. Dominated ones can be")
         print("dropped without argument; the rest are the frontier, and choosing")
         print("among THOSE is a judgement about how much quality a saving is worth.")
         print()
-        print(f"{'config':>14} | {'trigger':>8} | {'ROUGE-L':>16} | verdict")
-        print("-" * 66)
-        for name, trig, qual, hw in sorted(pareto_rows, key=lambda r: -r[1]):
+        print(f"{'config':>14} | {'n':>4} | {'trigger':>8} | {'ROUGE-L':>16} | verdict")
+        print("-" * 73)
+        for name, trig, qual, hw, n in sorted(pareto_rows, key=lambda r: -r[1]):
             # Dominance needs the quality gap to clear both intervals. Judging it
             # on point estimates alone declared A "dominated" over a 0.007 gap
             # while the half-widths were 0.011 -- a verdict the data cannot carry.
             dominated_by = [
-                other for other, t2, q2, h2 in pareto_rows
+                other for other, t2, q2, h2, _ in pareto_rows
                 if other != name and t2 >= trig and (q2 - h2) > (qual + hw)
             ]
             if dominated_by:
                 verdict = "dominated by " + ", ".join(dominated_by[:2])
             else:
                 beaten_on_quality = any(
-                    (q2 - h2) > (qual + hw) for o, _, q2, h2 in pareto_rows if o != name
+                    (q2 - h2) > (qual + hw)
+                    for o, _, q2, h2, _n in pareto_rows if o != name
                 )
                 verdict = ("frontier" if not beaten_on_quality
                            else "frontier (kept: saves more)")
-            print(f"{name:>14} | {trig:>7.1%} | {qual:.4f} +-{hw:.4f} | {verdict}")
+            print(f"{name:>14} | {n:>4} | {trig:>7.1%} | "
+                  f"{qual:.4f} +-{hw:.4f} | {verdict}")
         print()
         print("A configuration is only called dominated when the other's quality")
         print("advantage clears BOTH confidence intervals. Where quality cannot be")
@@ -226,9 +234,12 @@ def main():
         print("Trigger rate stands in for epsilon saving here; the two are monotone")
         print("but not proportional -- PLD composition is concave, so skipping 82%")
         print("of positions saves 71% of the budget, not 82%.")
-        print("One table per model. Configurations under different models are never")
-        print("compared here: a stronger model scores higher everywhere, which would")
-        print("read as its baseline dominating another model's strategy.")
+        print("One table per (model, epsilon). Configurations are never compared")
+        print("across either: a stronger model scores higher everywhere, and a")
+        print("larger budget buys more everywhere, so pooling them would read as")
+        print("the pre-filter winning or losing when neither had anything to do")
+        print("with it. n is the queries scored -- a screening row and a main row")
+        print("measure the same thing at very different precision.")
 
     print()
     print("ROUGE-L  mean with a 95% half-width. Overlapping intervals mean the two")
