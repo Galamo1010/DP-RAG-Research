@@ -35,6 +35,25 @@ confounded by exactly the thing it is trying to isolate. Instead the corpus indi
 recorded by `trace.retrieval_trace` are read back and the same documents
 reconstructed -- which is why those indices are stored rather than the text.
 
+WHY THE POLES DECODE GREEDILY
+-----------------------------
+The router emits `scores[NORAG_ROW].argmax()` at every position the pre-filter
+skips, so 87% of a strategy-A answer is greedy NoRAG text. Sampling the poles
+would measure that answer against a *differently drawn* NoRAG answer, and most of
+the gap would be the draw rather than the documents.
+
+The failure that matters is the one in the worst case. Suppose a configuration
+ignores the documents entirely and reproduces the greedy NoRAG answer exactly.
+Greedy poles report a similarity near 1.0 and the objection is conceded, which is
+the honest outcome. Sampled poles report a much lower one -- not because the
+documents did anything, but because the two texts diverge on the sampling -- and
+that reads as "the answer is not NoRAG". The metric would confirm document
+influence precisely where there is none.
+
+So both poles decode greedily, matching the router's free path. `temperature` is
+therefore unset: it does nothing under argmax, and passing it only invites a
+warning. The RAG pole still receives every document; only the token rule changed.
+
     uv run python experiments/stage3_poles.py [source_record_name]
 """
 
@@ -47,7 +66,7 @@ from dprag import paths, prompts, run_record
 from dprag.bench import Bench
 from dprag.chatdoctor import load_corpus
 from dprag.config import ExperimentConfig
-from dprag.dual_instance import make_generation_config
+from transformers import GenerationConfig
 
 # Whose retrieval to mirror. Any record written by dprag.sweep carries the corpus
 # indices; the baseline run is the natural choice because every other
@@ -111,9 +130,10 @@ def main():
           flush=True)
 
     bench = Bench.build(exp)
-    cfg = make_generation_config(
-        temperature=exp.temperature, max_new_tokens=exp.max_new_tokens
-    )
+    # Greedy, not sampled -- see WHY THE POLES DECODE GREEDILY above. Built here
+    # rather than via make_generation_config, which the Stage 2 scripts share and
+    # which must keep sampling.
+    cfg = GenerationConfig(do_sample=False, max_new_tokens=exp.max_new_tokens)
 
     rows = []
     for i, item in enumerate(source_record.per_item):
