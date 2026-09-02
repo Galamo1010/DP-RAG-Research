@@ -142,7 +142,7 @@ def probe(model_id: str, base: ExperimentConfig,
                 continue
             torch.manual_seed(exp.seed)
             t = time.time()
-            router.generate(documents, q.query)
+            router.generate(documents, question)
             seconds.append(time.time() - t)
             ks.append(len(documents))
             print(f"    k={len(documents):2d}  {seconds[-1]:5.1f}s  "
