@@ -229,6 +229,15 @@ class RoutedResult:
     token_epsilon: float
     epsilon_accounting: str = EPSILON_ACCOUNTING_NOTE
     norag_argmax: list[int] = field(default_factory=list)
+    # The RAG instance's own first choice, recorded alongside NoRAG's. Strategy A
+    # is exactly `rag_argmax == norag_argmax`, so storing both makes every
+    # strategy's decision auditable after the fact -- including Strategy B's,
+    # whose Jaccard test can skip a position where the two differ (the documents
+    # mattered and the saving lost them) and pay at one where they agree (the
+    # budget bought a token the free path would have emitted). The proposal asks
+    # for exactly that count: "策略B在「argmax不同但top-k高度重疊」位置的額外
+    # 覆蓋增益". It cannot be computed without this field.
+    rag_argmax: list[int] = field(default_factory=list)
 
     @property
     def n_steps(self) -> int:
@@ -302,6 +311,7 @@ class Router:
 
         emitted: list[int] = []
         norag_argmax: list[int] = []
+        rag_argmax: list[int] = []
         decisions: list[PrefilterDecision] = []
         paid_positions: list[int] = []
         # Exactly the tokens the DPRAG stream has not been shown yet.
@@ -314,6 +324,10 @@ class Router:
             decision = self.strategy(scores[RAG_ROW], scores[NORAG_ROW])
             decisions.append(decision)
             norag_argmax.append(int(scores[NORAG_ROW].argmax()))
+            # Recorded for every position, not only paid ones, and read from the
+            # same forward the strategy just saw. No extra compute, no draw from
+            # any generator: this cannot change what is emitted.
+            rag_argmax.append(int(scores[RAG_ROW].argmax()))
 
             if decision.consistent:
                 token = decision.token_id
@@ -338,6 +352,7 @@ class Router:
                 emitted.pop()
                 decisions.pop()
                 norag_argmax.pop()
+                rag_argmax.pop()
                 if paid_positions and paid_positions[-1] == position:
                     paid_positions.pop()
                 break
@@ -356,4 +371,5 @@ class Router:
             epsilon_budget=epsilon_budget,
             token_epsilon=token_epsilon,
             norag_argmax=norag_argmax,
+            rag_argmax=rag_argmax,
         )

@@ -25,6 +25,15 @@ checkable rather than assumed, and this project's characteristic bug is the kind
 that produces a plausible wrong answer instead of an exception. `check` turns
 that redundancy into an assertion; a violation means the router is broken.
 
+`rag_argmax` earns its place the same way. Strategy A's decision *is*
+`rag_argmax == norag_argmax`, so on an A run the two can be checked against the
+recorded decisions rather than trusted. On a Strategy B run they are not
+redundant at all: they are the only way to see that B paid at a position where
+the documents changed nothing, or skipped one where they changed the first
+choice. The proposal asks for that count directly -- "量化策略B在「argmax不同但
+top-k高度重疊」位置的額外覆蓋增益" -- and it is not reconstructible from a
+trigger rate or a trace that stores only NoRAG's opinion.
+
 `clinical` is stored dense, one entry per position, rather than as a list of the
 few positions that are clinical. It is 99% nulls and costs a few hundred KB per
 run. What it buys is that all three sequences have the same length, so a truncated
@@ -53,6 +62,7 @@ def strategy_trace(result, marks: list[TokenMark | None], seconds: float) -> dic
         "text": result.text,
         "emitted": list(result.emitted),
         "norag_argmax": list(result.norag_argmax[:n]),
+        "rag_argmax": list(result.rag_argmax[:n]),
         "paid_positions": list(result.paid_positions),
         "clinical": [None if m is None else [m.kind, m.is_first] for m in marks[:n]],
     }
@@ -90,10 +100,12 @@ def check(record: dict[str, Any]) -> None:
     specific breakage rather than leaving a plausible-looking number in place.
     """
     n = len(record["emitted"])
-    if not (len(record["norag_argmax"]) == len(record["clinical"]) == n):
+    if not (len(record["norag_argmax"]) == len(record["rag_argmax"])
+            == len(record["clinical"]) == n):
         raise ValueError(
             f"trace lengths disagree: emitted={n} "
             f"norag_argmax={len(record['norag_argmax'])} "
+            f"rag_argmax={len(record.get('rag_argmax', []))} "
             f"clinical={len(record['clinical'])} -- a sequence was truncated"
         )
 
@@ -119,6 +131,47 @@ def free_positions(record: dict[str, Any]) -> list[int]:
     """Positions that took the free path. Stage 4.2's x-axis."""
     paid = set(record["paid_positions"])
     return [i for i in range(len(record["emitted"])) if i not in paid]
+
+
+def wasted_paid_positions(record: dict[str, Any]) -> list[int]:
+    """Paid positions where the documents did not change the model's first choice.
+
+    `rag_argmax == norag_argmax` means the RAG instance and the NoRAG instance
+    wanted the same token, so the aggregation was run -- and epsilon spent -- on a
+    position the free path would have answered identically. Strategy A cannot
+    produce these by construction; Strategy B can, because a low Jaccard overlap
+    fires on tail disagreement even when the head agrees.
+
+    Empty for records written before `rag_argmax` was recorded.
+    """
+    rag, norag = record.get("rag_argmax"), record.get("norag_argmax")
+    if not rag or not norag:
+        return []
+    return [i for i in record["paid_positions"]
+            if i < len(rag) and rag[i] == norag[i]]
+
+
+def missed_free_positions(record: dict[str, Any]) -> list[int]:
+    """Free positions where the documents *did* change the model's first choice.
+
+    The other half of the same coin: the position was skipped to save budget, but
+    the RAG instance wanted a different token, so the documents' influence on it
+    was dropped rather than found to be absent. This is what a negative pole lean
+    looks like at position resolution.
+
+    **For Strategy A this must be empty**, since A's agreement test is exactly
+    `rag_argmax == norag_argmax`. A non-empty result on an A run means the
+    recorded argmax and the strategy that ran disagree -- one of them is wrong,
+    and the trace is no longer evidence about anything.
+
+    Empty for records written before `rag_argmax` was recorded.
+    """
+    rag, norag = record.get("rag_argmax"), record.get("norag_argmax")
+    if not rag or not norag:
+        return []
+    paid = set(record["paid_positions"])
+    return [i for i in range(min(len(rag), len(norag)))
+            if i not in paid and rag[i] != norag[i]]
 
 
 def norag_subsequence(record: dict[str, Any]) -> list[int]:
