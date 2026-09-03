@@ -29,8 +29,19 @@ quality for reasons that have nothing to do with the pre-filter, so what transfe
     PYTHONPATH=. .venv-gemma/bin/python experiments/stage3_3_crossmodel.py <model_id>
 """
 
+import os
 import sys
 import time
+
+# Before torch is imported, or the allocator is already configured. Qwen2.5-14B
+# peaks at 75.1 of 79.3 GB here: without this it fails on an allocation of 1.19 GB
+# while 5.35 GB sits in reserved-but-unallocated fragments. It is a memory-manager
+# setting and touches no arithmetic, so the output is unaffected.
+#
+# It lives here rather than in env.sh because env.sh is not in git: a reconnected
+# shell, or a new pod, would silently lose it and the phase would OOM hours in.
+# setdefault, so an explicit export still wins.
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 from dprag import paths, sweep
 from dprag.bench import Bench
