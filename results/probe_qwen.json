@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "name": "probe_qwen",
+  "created_at": "2026-09-03T05:35:50+00:00",
+  "git_commit": "4875d68",
+  "git_dirty": true,
+  "params": {
+    "delta": 0.001,
+    "eps_retrieval": 0.2,
+    "gen_epsilon": 10.0,
+    "temperature": 1.0,
+    "max_new_tokens": 128,
+    "alpha": 1.0,
+    "omega": 0.01,
+    "gen_model": "meta-llama/Llama-3.1-8B-Instruct",
+    "embed_model": "Snowflake/snowflake-arctic-embed-m-v1.5",
+    "retrieval_top_p": 0.02,
+    "retrieval_top_k": null,
+    "min_score": -0.5,
+    "max_score": 0.8,
+    "max_retrieve": 40,
+    "embed_batch_size": 32,
+    "bertscore_model": "microsoft/deberta-xlarge-mnli",
+    "bertscore_rescale": true,
+    "vocab_min_count": 3,
+    "n_docs": 10000,
+    "n_queries": 200,
+    "corpus_seed": 7,
+    "query_seed": 42,
+    "seed": 42
+  },
+  "metrics": {
+    "probed": [
+      "Qwen/Qwen2.5-14B-Instruct"
+    ],
+    "n_queries": 3,
+    "epsilon": 40.0,
+    "query_selection": "longest prompts in stage3_2_main_baseline_eps40",
+    "environment": "torch 2.4.1+cu124 / transformers 4.57.6",
+    "note": "Worst-case feasibility: the longest prompts in the query set, at the max_retrieve Phase 2 and the gemma-4 phase both used."
+  },
+  "per_item": [
+    {
+      "model": "Qwen/Qwen2.5-14B-Instruct",
+      "max_retrieve": 40,
+      "loaded": true,
+      "generated": true,
+      "oom": false,
+      "error": null,
+      "gpu_total_gb": 79.3,
+      "load_seconds": 112.1,
+      "vocab_size": 151665,
+      "weights_gb": 55.0,
+      "peak_gb": 75.1,
+      "reserved_gb": 76.1,
+      "seconds_per_query": 82.6,
+      "k_seen": [
+        40,
+        40,
+        40
+      ],
+      "queries": [
+        "Hi doctor,I am 29 years old and my wife is 26. I have been married for 2 years now. We are trying for baby since last 1 year but with no positive result. We used to intercourse as per ovulation calculator but my problem is that I can ejaculate only when she is on top.I fail to ejaculate when I am on top or in missionary position. In this position I suddenly lose my erection within 50 to 60 seconds.Is there any chance to get pregnant when woman on top? What should I do to increase my stamina? How to overcome sudden erection loss while intercourse in missionary position? I have attached my semen report here for your reference.",
+        "Hello doctor,I suppose I am suffering from anxiety. Also, I get scared of certain people or situations where I feel that I will be judged. Always, I think that people are judging me on whatever I do. So, I get anxious. This is a pattern since long. I understand that I can overcome it, as I find that there are few reference points in my memory where I have handled those situations well. I think I need help now as it interferes in my day to day life. Although I am able to manage it till now and am leading a good life, I think that I can do much better at work and relationships and will be able to enjoy life.",
+        "Hello doctor,I am a 27-year-old male, height is 1.75 and weight is 83. The doctor has diagnosed premature ejaculation problem. When I was engaged in self-masturbation, sperm came out within one minute. Sometimes feel it was over and it should be ejaculated. But nowadays I cannot stop self masturbation. The family is discussing marriage, so I was thinking about my sexual problem. I need solutions for premature ejaculation problem, and strengthen my penis."
+      ],
+      "query_selection": "longest prompts in stage3_2_main_baseline_eps40"
+    }
+  ]
+}
