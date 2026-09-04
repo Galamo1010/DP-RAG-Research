@@ -23,7 +23,8 @@ from transformers.generation.logits_process import (
     TopPLogitsWarper,
 )
 
-from dprag.router import Router, _composed_epsilon, sampling_warpers
+from dprag.accounting import composed_epsilon
+from dprag.router import Router, sampling_warpers
 from dprag.strategies import PrefilterDecision
 
 VOCAB = 12
@@ -206,7 +207,7 @@ def test_epsilon_usage_tracks_the_paid_count():
     result = router.generate(DOCS, "q")
 
     assert result.paid_positions == [1, 3, 5]
-    expected = _composed_epsilon(result.token_epsilon, 3, 1e-3)
+    expected = composed_epsilon(result.token_epsilon, 3, 1e-3)
     assert result.epsilon_usage == expected
     assert result.epsilon_usage < result.epsilon_budget
 
@@ -400,10 +401,10 @@ def test_result_carries_the_accounting_caveat():
 # --------------------------------------------------------------------------
 
 def test_composing_zero_steps_costs_nothing():
-    assert _composed_epsilon(0.2, 0, 1e-3) == 0.0
+    assert composed_epsilon(0.2, 0, 1e-3) == 0.0
 
 
 def test_composition_grows_with_steps():
-    a = _composed_epsilon(0.2, 4, 1e-3)
-    b = _composed_epsilon(0.2, 16, 1e-3)
+    a = composed_epsilon(0.2, 4, 1e-3)
+    b = composed_epsilon(0.2, 16, 1e-3)
     assert 0 < a < b

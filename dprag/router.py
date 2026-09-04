@@ -47,7 +47,6 @@ the assumption travels with the number.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from functools import lru_cache
 
 import torch
 from torch import Tensor
@@ -61,6 +60,7 @@ from transformers.generation.logits_process import (
 )
 
 from . import prompts
+from .accounting import composed_epsilon
 from .dual_instance import NORAG_ROW, RAG_ROW
 from .strategies import PrefilterDecision, Strategy
 
@@ -100,28 +100,6 @@ def sampling_warpers(config) -> LogitsProcessorList:
     if typical_p is not None and typical_p < 1.0:
         warpers.append(TypicalLogitsWarper(float(typical_p)))
     return warpers
-
-
-@lru_cache(maxsize=None)
-def _composed_epsilon(token_epsilon: float, steps: int, delta: float) -> float:
-    """Epsilon after composing `steps` copies of token_epsilon, via PLD.
-
-    Cached because a 200-query run composes the same handful of step counts over
-    and over, and each composition is a loop over PLD objects.
-    """
-    if steps <= 0:
-        return 0.0
-    from dp_accounting.pld.common import DifferentialPrivacyParameters
-    from dp_accounting.pld.privacy_loss_distribution import (
-        from_privacy_parameters,
-        identity,
-    )
-
-    pld = identity()
-    single = from_privacy_parameters(DifferentialPrivacyParameters(epsilon=token_epsilon))
-    for _ in range(steps):
-        pld = pld.compose(single)
-    return pld.get_epsilon_for_delta(delta)
 
 
 def _supports_logits_to_keep(model) -> bool:
@@ -357,8 +335,8 @@ class Router:
                     paid_positions.pop()
                 break
 
-        epsilon_budget = _composed_epsilon(token_epsilon, cfg.max_new_tokens, cfg.delta)
-        epsilon_usage = _composed_epsilon(token_epsilon, len(paid_positions), cfg.delta)
+        epsilon_budget = composed_epsilon(token_epsilon, cfg.max_new_tokens, cfg.delta)
+        epsilon_usage = composed_epsilon(token_epsilon, len(paid_positions), cfg.delta)
 
         return RoutedResult(
             question=question,
