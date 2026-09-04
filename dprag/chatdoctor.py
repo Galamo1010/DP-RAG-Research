@@ -13,6 +13,7 @@ Query set and corpus come from different sources, so non-overlap is guaranteed.
 
 import json
 import random
+import re
 from dataclasses import dataclass
 
 # dprag.paths is the single owner of layout knowledge; ask it rather than
@@ -24,6 +25,69 @@ from .paths import HEALTHCAREMAGIC_PATH, ICLINIQ_PATH, require_data
 class Query:
     query: str          # patient question (iCliniq "input")
     reference: str      # real doctor answer (iCliniq "answer_icliniq"), for quality metrics
+
+
+# --------------------------------------------------------------------------
+# Reference damage
+# --------------------------------------------------------------------------
+# The iCliniq reference answers are damaged by the dataset's own construction,
+# and the quality scores are computed against them. Measured over the 200-query
+# sample the experiments use (query_seed=42): 16.5% truncated, 12.5% referring to
+# an attachment, 1.5% both, 69.5% clean. See docs/notes/reference-damage.md.
+#
+# This lives here rather than in `quality` because it is a property of the
+# DATASET, not of a metric: the same damaged reference depresses ROUGE-L and
+# BERTScore alike, and a future third metric would inherit it too.
+
+TRUNCATED = "truncated"
+ATTACHMENT = "attachment"
+
+# Function words are excluded so that ordinary sentences naming the platform
+# ("Welcome to ChatDoctor forum", "Thanks for consulting ChatDoctor") are not
+# counted as truncations. A truncation cuts mid-content, so the word before the
+# splice is a content word -- often a half-eaten drug name ("Pseudoephe").
+_FUNCTION_WORDS = frozenset({
+    "to", "at", "on", "in", "for", "with", "from", "of", "the", "a", "an",
+    "and", "or", "but", "is", "are", "was", "were", "be", "been", "using",
+    "use", "used", "visit", "consult", "consulting", "contact", "ask",
+    "asking", "join", "joining", "welcome", "thanks", "thank", "regards",
+    "team", "here", "this", "that", "our", "your", "my", "we", "you", "i",
+})
+
+_TRUNCATION_RE = re.compile(r"\b([A-Za-z][A-Za-z'-]*)\s+ChatDoctor\b", re.IGNORECASE)
+_ATTACHMENT_RE = re.compile(r"attachment removed to protect (?:patient )?identity",
+                            re.IGNORECASE)
+
+
+def reference_damage(reference: str) -> set[str]:
+    """Which kinds of damage this reference carries. Empty set means clean.
+
+    Two kinds, returned separately rather than as one boolean, because they
+    break a quality score for different reasons and may not affect a semantic
+    metric equally:
+
+    `TRUNCATED` -- a sentence is cut, often mid-word, with the string
+    "ChatDoctor" spliced in, and what gets eaten is frequently the drug name
+    ("Sudafed (Pseudoephe ChatDoctor."). Content is MISSING, so a metric that
+    matches meaning may be hurt more than one matching word subsequences.
+
+    `ATTACHMENT` -- the doctor is describing an image the model never sees. The
+    reference is intact; it is the TASK that is impossible, so no answer can
+    score well and the ceiling is unreachable rather than the text being broken.
+
+    Heuristic, and deliberately conservative in one direction: it will miss a
+    truncation that spliced nothing in, and it will occasionally flag a sentence
+    that legitimately names the platform after a content word. Both are stated
+    wherever the resulting rates are reported.
+    """
+    kinds = set()
+    for match in _TRUNCATION_RE.finditer(reference):
+        if match.group(1).lower() not in _FUNCTION_WORDS:
+            kinds.add(TRUNCATED)
+            break
+    if _ATTACHMENT_RE.search(reference):
+        kinds.add(ATTACHMENT)
+    return kinds
 
 
 def load_corpus(limit: int | None = None, sample_seed: int | None = None) -> list[str]:
