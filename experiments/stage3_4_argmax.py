@@ -23,6 +23,22 @@ copying artifacts.
 Together they say whether a strategy is *selecting* the document-independent
 positions or merely skipping a lot of them.
 
+WHAT THE EPSILON ACTUALLY BOUGHT
+--------------------------------
+The same field answers a second question, about the paid path rather than the free
+one. Split the paid positions into those where the documents had an opinion
+(`rag_argmax != norag_argmax`) and those where they did not, then ask what the
+aggregation emitted at the contested ones. Three outcomes: the token the RAG
+instance wanted, the token the NoRAG instance wanted, or neither.
+
+That comparison is only valid ACROSS configurations, never as an absolute. The
+aggregation is not trying to reproduce `rag_argmax`: that comes from one prompt
+holding all the documents concatenated, while the aggregation runs k+1 separate
+streams carrying one document each and combines them. They are different
+mechanisms, so "emitted == rag_argmax" is a proxy for document influence
+surviving, not a target the aggregation aims at. What the column can say is
+whether ROUTING degraded the paid path relative to plain DPRAG.
+
 STRATEGY A'S TWO ZEROES ARE TAUTOLOGICAL
 ----------------------------------------
 A's agreement test *is* `rag_argmax == norag_argmax`, so A cannot waste (it never
@@ -98,6 +114,35 @@ def counts(strategy_record: dict) -> dict[str, int]:
         "wasted": len(trace.wasted_paid_positions(strategy_record)),
         "missed": len(trace.missed_free_positions(strategy_record)),
     }
+
+
+def paid_breakdown(strategy_record: dict) -> dict[str, int]:
+    """How the paid positions split, and what was emitted where it mattered.
+
+    `contested` is the subset of paid positions where the documents wanted a
+    different token. Only there does "did the aggregation follow the documents?"
+    mean anything -- at an uncontested paid position both instances wanted the
+    same token, so emitting it says nothing about influence.
+    """
+    rag = strategy_record.get("rag_argmax") or []
+    norag = strategy_record.get("norag_argmax") or []
+    emitted = strategy_record.get("emitted") or []
+    out = {"paid": 0, "contested": 0, "followed_rag": 0, "followed_norag": 0,
+           "neither": 0}
+    for i in strategy_record.get("paid_positions", []):
+        if i >= len(rag) or i >= len(norag) or i >= len(emitted):
+            continue
+        out["paid"] += 1
+        if rag[i] == norag[i]:
+            continue
+        out["contested"] += 1
+        if emitted[i] == rag[i]:
+            out["followed_rag"] += 1
+        elif emitted[i] == norag[i]:
+            out["followed_norag"] += 1
+        else:
+            out["neither"] += 1
+    return out
 
 
 def load_probe():
@@ -200,6 +245,44 @@ def table(probe, totals) -> None:
     print("disagree. What the table says is how far the others fall from that line.")
 
 
+def paid_table(paid_totals) -> None:
+    print()
+    print("=== what the epsilon bought, at the positions where documents disagreed ===")
+    print()
+    print(f"{'config':>12} | {'paid':>6} | {'contested':>18} | "
+          f"{'-> RAG token':>24} | {'-> NoRAG':>10} | {'-> neither':>11}")
+    print("-" * 96)
+    for name in sorted(paid_totals, key=order_key):
+        c = paid_totals[name]
+        if not c["paid"]:
+            continue
+        n = c["contested"]
+        if not n:
+            print(f"{name:>12} | {c['paid']:>6} | {0:>8} ({0.0:>6.1%}) | "
+                  f"{'-':>24} | {'-':>10} | {'-':>11}")
+            continue
+        lo, hi = wilson(c["followed_rag"], n)
+        print(f"{name:>12} | {c['paid']:>6} | {n:>8} ({n / c['paid']:>6.1%}) | "
+              f"{c['followed_rag']:>5} {c['followed_rag'] / n:>6.1%} "
+              f"[{lo:>5.1%},{hi:>6.1%}] | "
+              f"{c['followed_norag'] / n:>10.1%} | {c['neither'] / n:>11.1%}")
+    print()
+    print("contested   paid positions where rag_argmax != norag_argmax: the documents")
+    print("            wanted a different token, so paying was potentially worth it.")
+    print("            Strategy A is 100% by construction -- that IS its rule. The")
+    print("            informative comparison is the baseline's, which shows what")
+    print("            share of plain DPRAG's spend lands somewhere that matters.")
+    print("-> RAG      of the contested ones, the share where the aggregation emitted")
+    print("            the token the RAG instance wanted.")
+    print()
+    print("READ THIS ACROSS CONFIGURATIONS ONLY, NEVER AS AN ABSOLUTE. The aggregation")
+    print("is not trying to reproduce rag_argmax: that comes from one prompt with every")
+    print("document concatenated, while the aggregation runs k+1 one-document streams")
+    print("and combines them. A low share does NOT mean 'DP destroyed that much")
+    print("document influence'. What it does show is whether routing degraded the paid")
+    print("path relative to plain DPRAG -- overlapping intervals mean it did not.")
+
+
 def figure(probe, totals) -> None:
     import matplotlib
     matplotlib.use("Agg")
@@ -245,16 +328,23 @@ def main():
     equivalence_check(probe)
 
     totals: dict[str, dict[str, int]] = {}
+    paid_totals: dict[str, dict[str, int]] = {}
     for row in probe.per_item:
         for name, sr in row["by_strategy"].items():
             acc = totals.setdefault(
                 name, {"positions": 0, "paid": 0, "free": 0, "wasted": 0, "missed": 0})
             for k, v in counts(sr).items():
                 acc[k] += v
+            pacc = paid_totals.setdefault(
+                name, {"paid": 0, "contested": 0, "followed_rag": 0,
+                       "followed_norag": 0, "neither": 0})
+            for k, v in paid_breakdown(sr).items():
+                pacc[k] += v
     if not totals:
         raise SystemExit("the probe record holds no strategies")
 
     table(probe, totals)
+    paid_table(paid_totals)
     figure(probe, totals)
 
 
