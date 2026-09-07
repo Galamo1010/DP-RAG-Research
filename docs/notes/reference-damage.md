@@ -62,12 +62,50 @@ than excluding 30% of the sample.** That is both the stronger claim and the one
 that needs no defence against selection bias — the excluded attachment cases skew
 towards imaging-related presentations, which is not a random 12.5%.
 
-## What is still open
+## Resolved: BERTScore loses no more than ROUGE-L (2026-09-05)
 
-**BERTScore is untested here.** It matches semantically, so a missing drug name
-may cost it more than it costs a subsequence measure. Re-run this comparison once
-the package is available; if the gap is small there too, this limitation comes off
-the list entirely.
+The question left open above was whether a *semantic* metric is hurt more than a
+subsequence metric when the reference is missing a drug name. It is not.
+
+Re-measured on the Stage 3 records at eps=40, all queries versus the undamaged
+subset, both metrics on the same answers:
+
+| record | ROUGE all | clean | diff | BERT all | clean | diff |
+|---|---|---|---|---|---|---|
+| baseline (Llama) | 0.1200 | 0.1209 | +0.0009 | 0.0792 | 0.0825 | +0.0033 |
+| A (Llama) | 0.1210 | 0.1213 | +0.0002 | 0.0688 | 0.0714 | +0.0027 |
+| B_k20_t0.7 (Llama) | 0.1191 | 0.1196 | +0.0004 | 0.0700 | 0.0714 | +0.0014 |
+| B_k20_t0.9 (Llama) | 0.1201 | 0.1209 | +0.0008 | 0.0835 | 0.0855 | +0.0020 |
+| B_k50_t0.5 (Llama) | 0.1210 | 0.1223 | +0.0013 | 0.0608 | 0.0642 | +0.0034 |
+| baseline (gemma) | 0.0606 | 0.0637 | +0.0031 | −0.2508 | −0.2419 | +0.0090 |
+| A (gemma) | 0.0850 | 0.0890 | +0.0040 | −0.1763 | −0.1698 | +0.0065 |
+| B_k20_t0.7 (gemma) | 0.0635 | 0.0648 | +0.0013 | −0.2320 | −0.2290 | +0.0030 |
+
+Across every record: ROUGE-L moves by **+0.0002 to +0.0040**, BERTScore by
+**+0.0014 to +0.0090**. Both are in the direction predicted and both are small.
+BERTScore's absolute movement is larger, but so is its scale after rescaling, and
+the ordering of configurations is unchanged in every cell.
+
+**So the conclusion above stands for both metrics: the damage was measured and
+found not to matter, and the sample is not filtered.** This limitation comes off
+the list.
+
+Two things changed since the measurement at the top of this note:
+
+**The detector is now in code.** `dprag.chatdoctor.reference_damage` returns the
+set of damage kinds (`TRUNCATED`, `ATTACHMENT`), so the split is reproducible and
+`experiments/stage3_score.py` prints the comparison on every run. The original
+table was computed ad hoc and its function-word list was never saved, which is why
+the counts differ slightly: this detector finds 34 truncated-only / 24
+attachment-only / 4 both / 138 undamaged, against the 33 / 25 / 3 / 139 above —
+within one in every cell. **A measurement whose code was not kept is a measurement
+you no longer have**, and that is the transferable lesson from this note.
+
+**The kinds are returned separately rather than as one boolean**, because they
+break a score for different reasons: truncation removes content (so a semantic
+metric might have lost more, which is the question this section answers), whereas
+an attachment reference is intact text describing an image the model never sees —
+there the *task* is impossible, not the text broken.
 
 ## The transferable part
 
