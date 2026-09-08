@@ -18,6 +18,7 @@ Schema (SCHEMA_VERSION 1):
       "created_at": "2026-07-25T12:34:56+00:00",
       "git_commit": "cec883d" | null,
       "git_dirty": true | false,
+      "environment": {"torch": "2.4.1+cu124", "transformers": "4.57.6"},
       "params": { ...every ExperimentConfig field... },
       "metrics": { ...experiment-defined summary numbers... },
       "per_item": [ ... optional per-query rows ... ]
@@ -25,6 +26,10 @@ Schema (SCHEMA_VERSION 1):
 
 `metrics` and `per_item` are deliberately free-form: what a run measures is the
 experiment's business, but how it is identified and parameterised is not.
+
+`environment` was added on 2026-09-08 and is absent from every record written
+before it; `created_at` says which. The schema number is not bumped, because a
+reader that never asked for the key is unaffected by its arrival.
 """
 
 from __future__ import annotations
@@ -65,6 +70,27 @@ def git_dirty() -> bool | None:
     return None if status is None else bool(status)
 
 
+def environment() -> dict[str, str]:
+    """The library versions this run was produced under.
+
+    Not a parameter -- nothing in the experiment chooses it -- but it changes the
+    numbers, so it belongs in the record for the same reason the git commit does.
+    `gen_dtype` is the concrete case: from_pretrained's default precision differs
+    between transformers 4.57 and 5.x, and recovering which one produced a given
+    result file took a pyproject comment, a docstring naming a venv, and
+    `git log -L` over the model-loading line.
+
+    Imported lazily so that reading results does not pay for importing torch.
+    """
+    out: dict[str, str] = {}
+    for name in ("torch", "transformers"):
+        try:
+            out[name] = __import__(name).__version__
+        except Exception:
+            out[name] = "unavailable"
+    return out
+
+
 @dataclass(frozen=True)
 class RunRecord:
     """A loaded result file."""
@@ -76,6 +102,7 @@ class RunRecord:
     per_item: list[dict[str, Any]]
     git_commit: str | None = None
     git_dirty: bool | None = None
+    environment: dict[str, str] | None = None
     schema: int = SCHEMA_VERSION
     path: Path | None = None
 
@@ -108,6 +135,7 @@ def write(
         "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "git_commit": git_commit(),
         "git_dirty": git_dirty(),
+        "environment": environment(),
         "params": params,
         "metrics": metrics,
         "per_item": per_item or [],
@@ -138,6 +166,7 @@ def load(path: Path | str) -> RunRecord:
         per_item=raw.get("per_item", []),
         git_commit=raw.get("git_commit"),
         git_dirty=raw.get("git_dirty"),
+        environment=raw.get("environment"),
         schema=raw["schema"],
         path=path,
     )

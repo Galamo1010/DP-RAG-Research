@@ -10,10 +10,10 @@ class DPRAGEngine:
             pup_vector_store_config: PUPVectorStoreConfig = PUPVectorStoreConfig(),
             model_id="microsoft/Phi-3.5-mini-instruct",
             dp_generation_config: DPGenerationConfig = DPGenerationConfig(),
-            
+            gen_dtype: str = "float32",
         ):
         self.pup_vector_store: PUPVectorStore = PUPVectorStore(config=pup_vector_store_config)
-        self.dp_model: DPModel = DPModel(model_id=model_id)
+        self.dp_model: DPModel = DPModel(model_id=model_id, dtype=gen_dtype)
         self.dp_generation_config = dp_generation_config
         self.privacy_loss_distribution = self.pup_vector_store.privacy_loss_distribution.compose(dp_generation_config.privacy_loss_distribution)
     

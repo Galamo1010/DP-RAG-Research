@@ -154,12 +154,24 @@ class DPLogitsAggregator(LogitsProcessor):
 
 
 class DPModel:
-    def __init__(self, model_id: str="meta-llama/Llama-3.2-1B-Instruct"):
+    def __init__(self, model_id: str="meta-llama/Llama-3.2-1B-Instruct",
+                 dtype: str="float32"):
         self.model_id = model_id
+        self.dtype = dtype
     
     @cached_property
     def model(self) -> PreTrainedModel:
-        result = AutoModelForCausalLM.from_pretrained(self.model_id, device_map='cuda')
+        # `dtype=` is passed explicitly because from_pretrained has no stable
+        # default: 4.57 falls back to torch's global float32, 5.x reads the
+        # checkpoint. Leaving it out is what made the loaded precision a
+        # property of the installed library rather than of the experiment.
+        # The kwarg is spelled `dtype` in both versions (`torch_dtype` still
+        # works in 4.57 but warns that it is deprecated).
+        dtype = getattr(torch, self.dtype, None)
+        if not isinstance(dtype, torch.dtype):
+            raise ValueError(f"gen_dtype={self.dtype!r} is not a torch dtype")
+        result = AutoModelForCausalLM.from_pretrained(
+            self.model_id, device_map='cuda', dtype=dtype)
         result = result.eval()
         return result
     

@@ -92,6 +92,20 @@ class ExperimentConfig:
     alpha: float = 1.0             # exp-mechanism score concentration
     omega: float = 0.01            # public-prior weight
     gen_model: str = "meta-llama/Llama-3.1-8B-Instruct"
+    # float32 is not a preference, it is what results/ actually contains. The
+    # loader passed no dtype at all, and transformers 4.57's from_pretrained
+    # falls back to the global default (float32) while 5.x reads the
+    # checkpoint's -- so the same line loaded Qwen at 55.0 GiB and gemma at
+    # 22.3 GiB. Recording it here is the point: until now the dtype behind a
+    # number could only be recovered by reading git history and a pyproject
+    # comment.
+    #
+    # The default stays float32 so that re-running an old experiment reproduces
+    # its old numbers; a run that wants bf16 asks for it. Note that float32 buys
+    # no precision -- the checkpoints are bf16 on the hub, so loading in float32
+    # only zero-extends them, at two bytes per weight and off the tensor-core
+    # matmul path.
+    gen_dtype: str = "float32"
 
     # -- Retrieval (pup_vector_store.PUPVectorStoreConfig) ------------------
     embed_model: str = "Snowflake/snowflake-arctic-embed-m-v1.5"

@@ -94,6 +94,7 @@ class Bench:
                 seed=cfg.seed,
             ),
             model_id=cfg.gen_model,
+            gen_dtype=cfg.gen_dtype,
             dp_generation_config=DPGenerationConfig(
                 temperature=cfg.temperature,
                 max_new_tokens=cfg.max_new_tokens,
