@@ -76,7 +76,7 @@ import torch
 from dprag import paths, prompts, run_record
 from dprag.bench import Bench
 from dprag.chatdoctor import load_corpus
-from dprag.config import ExperimentConfig
+from dprag.config import ExperimentConfig, gen_dtype_for
 from transformers import GenerationConfig
 
 # Whose retrieval to mirror. Any record written by dprag.sweep carries the corpus
@@ -116,6 +116,12 @@ def main():
     exp = EXPERIMENT
     if len(sys.argv) > 2:
         exp = exp.with_(gen_model=sys.argv[2])
+    # The poles are the grounding the routed runs are read against, so they must
+    # run at the same precision as those runs. Left at the field default, Qwen's
+    # poles would come out float32 while its Phase 3 records are bfloat16, and
+    # "the documents still shape the answer" would be measured against a
+    # different model than the one that produced the answers.
+    exp = exp.with_(gen_dtype=gen_dtype_for(exp.gen_model))
 
     source_path = paths.results_dir() / f"{source}.json"
     if not source_path.exists():
@@ -138,7 +144,8 @@ def main():
               f"corpus_seed={corpus_seed}), which differs from this config")
     corpus = load_corpus(limit=n_docs, sample_seed=corpus_seed)
 
-    print(f"=== Stage 3 poles | source={source} | model={exp.gen_model} ===")
+    print(f"=== Stage 3 poles | source={source} | model={exp.gen_model} "
+          f"| dtype={exp.gen_dtype} ===")
     print(f"{len(source_record.per_item)} queries, documents reused by index\n",
           flush=True)
 

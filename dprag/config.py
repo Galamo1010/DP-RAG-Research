@@ -69,12 +69,60 @@ MODELS = [
     "google/gemma-4-12B-it",              # Google,  ~12B,  vocab 262,144  (ADR 0004)
 ]
 
+# Which precision each model's arm runs at. This is not a free knob: for a model
+# that already has records it is the dtype those records were produced at, and
+# the table exists so that a later run reproduces them instead of silently
+# picking a different one.
+#
+#   Llama   float32  -- Phase 1/2 ran before `gen_dtype` existed, under
+#                       transformers 4.57, whose from_pretrained falls back to
+#                       torch's global float32 when no dtype is passed. Those
+#                       records are not re-run, so the arm stays float32.
+#   gemma   bfloat16 -- Phase 3 and its poles ran from .venv-gemma
+#                       (transformers 5.x), which reads the checkpoint instead:
+#                       22.3 GiB of weights in probe_gemma.json says bf16.
+#   Qwen    bfloat16 -- no records exist yet, so nothing constrains it, and
+#                       probe_dtype measured float32 costing 4.35x the seconds
+#                       and 2.0x the peak memory for a width the bf16 checkpoint
+#                       does not carry.
+#
+# The consequence -- one model on a different dtype from the other two -- has the
+# same shape as the library-version split already measured in
+# results/env_equivalence_*.json, and is licensed by the same rule: every
+# comparison in this project is within one model, against that model's own
+# baseline. It belongs in the report's limitations, not in a footnote.
+GEN_DTYPE_BY_MODEL = {
+    "meta-llama/Llama-3.1-8B-Instruct": "float32",
+    "Qwen/Qwen2.5-14B-Instruct":        "bfloat16",
+    "google/gemma-4-12B-it":            "bfloat16",
+}
+
+
 # On-disk data (located by dprag.paths), downloaded 2026-07-02 from the ChatDoctor
 # README:
 #   HealthCareMagic-100k.json : 112,165 rows -> 110,513 unique "output" corpus docs
 #   iCliniq-10k.json          :   7,321 rows; "input" = query, "answer_icliniq" = reference
 CORPUS = "HealthCareMagic-100k"    # doctor replies -> private corpus
 QUERY_SET = "iCliniq-10k"          # patient questions -> queries + reference answers
+
+
+def gen_dtype_for(model: str) -> str:
+    """The dtype `model`'s arm runs at, or a refusal.
+
+    Falling back to the field default here would be the failure the table was
+    written to prevent: a model nobody had thought about would quietly run at
+    float32 and its records would look like everyone else's.
+    """
+    try:
+        return GEN_DTYPE_BY_MODEL[model]
+    except KeyError:
+        raise SystemExit(
+            f"no dtype recorded for {model!r}. "
+            "Add it to GEN_DTYPE_BY_MODEL in dprag/config.py, with the reason. "
+            "For a model with no records yet that is the checkpoint's own "
+            "dtype; for one that has records it is whatever produced them, "
+            "which experiments/probe_dtype.py will measure."
+        ) from None
 
 
 @dataclass(frozen=True)

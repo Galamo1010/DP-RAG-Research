@@ -33,10 +33,15 @@ import os
 import sys
 import time
 
-# Before torch is imported, or the allocator is already configured. Qwen2.5-14B
-# peaks at 75.1 of 79.3 GB here: without this it fails on an allocation of 1.19 GB
-# while 5.35 GB sits in reserved-but-unallocated fragments. It is a memory-manager
-# setting and touches no arithmetic, so the output is unaffected.
+# Before torch is imported, or the allocator is already configured. It is a
+# memory-manager setting and touches no arithmetic, so the output is unaffected.
+#
+# This was load-bearing when Qwen ran at float32 and peaked at 75.1 of 79.3 GB,
+# where an allocation of 1.19 GB could fail with 5.35 GB sitting in
+# reserved-but-unallocated fragments. At bfloat16 the peak is 37.8 GB
+# (probe_dtype_Qwen2.5-14B-Instruct.json) and the headroom makes fragmentation a
+# non-issue -- so this is now insurance rather than a fix, and it is kept because
+# a future model, or a raised max_retrieve, would need it again.
 #
 # It lives here rather than in env.sh because env.sh is not in git: a reconnected
 # shell, or a new pod, would silently lose it and the phase would OOM hours in.
@@ -45,7 +50,7 @@ os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 from dprag import paths, sweep
 from dprag.bench import Bench
-from dprag.config import ExperimentConfig
+from dprag.config import ExperimentConfig, gen_dtype_for
 from dprag.dp_model import DPGenerationConfig
 from dprag.strategies import make_strategy_b, strategy_a
 
@@ -81,13 +86,18 @@ def check_comparison_arm_exists() -> None:
 
 def main():
     model = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_MODEL
-    exp = EXPERIMENT.with_(gen_model=model, gen_epsilon=float(EPSILON))
+    # Not the field default: this model's arm has a dtype, and running at any
+    # other one makes the record incomparable with the rest of its own arm --
+    # including the poles, which stage3_poles.py reads the same table for.
+    exp = EXPERIMENT.with_(gen_model=model, gen_epsilon=float(EPSILON),
+                           gen_dtype=gen_dtype_for(model))
     check_comparison_arm_exists()
 
     short = model.split("/")[-1]
     print(f"=== Stage 3.2 phase 3: cross-model | model={model} ===")
     print(f"{len(CONFIGS)} configurations x 1 budget x {exp.n_queries} queries "
-          f"| max_retrieve={exp.max_retrieve} | eps={EPSILON}")
+          f"| max_retrieve={exp.max_retrieve} | eps={EPSILON} "
+          f"| dtype={exp.gen_dtype}")
     print(f"configurations: {list(CONFIGS)}")
     print(f"compared against: {COMPARISON_RECORDS}")
     print("checkpointed per query; completed runs are skipped\n", flush=True)
