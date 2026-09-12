@@ -54,6 +54,7 @@ so is the baseline's standing as "plain DPRAG" everywhere else in the project.
     uv run python experiments/stage5_1_plain_timing.py
 """
 
+import faulthandler
 import statistics as st
 import time
 
@@ -69,6 +70,10 @@ EPSILON = 40
 N_QUERIES = 40
 EXPERIMENT = ExperimentConfig(n_queries=200)
 FILENAME = f"stage5_1_plain_timing_{N_QUERIES}q_eps{EPSILON}"
+
+# Generous: the smoke test puts a 4-token query at 40 s for both arms, and 128
+# tokens should land near 90 s. Anything past this is not slowness.
+WATCHDOG_SECONDS = 900
 
 # The Phase 2 curve this anchors into. Order here is documentation; the points are
 # sorted by the trigger rate read out of each record, not by this list.
@@ -195,6 +200,11 @@ def paired_report(rows: list[dict], curve) -> None:
 
 
 def main():
+    # A query is two generations, so no single one can plausibly take this long.
+    # If one does, the stack of every thread is worth more than a blank terminal:
+    # the first attempt at this run produced no evidence at all.
+    faulthandler.dump_traceback_later(WATCHDOG_SECONDS, exit=True)
+
     exp = EXPERIMENT.with_(gen_epsilon=float(EPSILON))
     curve = load_curve()                       # fail before an hour of model loading
     bench = Bench.build(exp)
@@ -212,6 +222,14 @@ def main():
         temperature=exp.temperature, max_new_tokens=exp.max_new_tokens,
         alpha=exp.alpha, omega=exp.omega, epsilon=float(EPSILON), delta=exp.delta,
     )
+    # Force the generation model in before anything is timed. `DPModel.model` is a
+    # cached_property, so otherwise the first query's plain arm carries 35 seconds
+    # of checkpoint loading and lands in the paired ratio as the pre-filter's cost.
+    print("  loading the generation model (outside the timed region)", flush=True)
+    began = time.time()
+    _ = bench.dp_model.model
+    print(f"  loaded in {time.time() - began:.1f}s\n", flush=True)
+
     store = bench.engine.pup_vector_store
     rows: list[dict] = []
     zero_docs = 0
@@ -244,12 +262,30 @@ def main():
         # Alternate which arm goes first. Under a fixed order anything that drifts
         # within a query -- clock boost, cache state -- lands on the same arm every
         # time and gets read as the pre-filter's cost.
+        #
+        # Announced BEFORE each arm rather than after both. A query costs the two
+        # arms together, roughly a minute and a half, and an earlier version of
+        # this file printed nothing until both had finished -- which is
+        # indistinguishable from a hang, and was duly read as one. `sweep.py` has
+        # a comment about this exact failure; this file now obeys it.
+        first = "plain" if i % 2 == 0 else "routed"
+        print(f"  [{len(rows) + 1:>3}/{len(queries)}] {len(documents)} docs, "
+              f"{first} first", flush=True)
+
         if i % 2 == 0:
+            print("        plain ...", end="", flush=True)
             plain_seconds, plain_text = run_plain()
+            print(f" {plain_seconds:.1f}s", flush=True)
+            print("        routed ...", end="", flush=True)
             routed_seconds, routed = run_routed()
+            print(f" {routed_seconds:.1f}s", flush=True)
         else:
+            print("        routed ...", end="", flush=True)
             routed_seconds, routed = run_routed()
+            print(f" {routed_seconds:.1f}s", flush=True)
+            print("        plain ...", end="", flush=True)
             plain_seconds, plain_text = run_plain()
+            print(f" {plain_seconds:.1f}s", flush=True)
 
         rows.append({
             "query": question,
@@ -262,10 +298,11 @@ def main():
             "identical": plain_text == routed.text,
             "order": "plain_first" if i % 2 == 0 else "routed_first",
         })
-        mark = "" if rows[-1]["identical"] else "  *** DIFFERS ***"
-        print(f"  [{len(rows):>3}/{len(queries)}] plain {plain_seconds:6.1f}s  "
-              f"routed {routed_seconds:6.1f}s  "
-              f"ratio {plain_seconds / routed_seconds:.3f}{mark}", flush=True)
+        mark = "" if rows[-1]["identical"] else "   *** ANSWERS DIFFER ***"
+        print(f"        ratio {plain_seconds / routed_seconds:.3f}{mark}",
+              flush=True)
+
+    faulthandler.cancel_dump_traceback_later()
 
     if not rows:
         raise SystemExit("every query retrieved zero documents; nothing was timed")
