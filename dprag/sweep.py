@@ -80,12 +80,25 @@ def routed_sweep(
     metrics: dict[str, Any] | None = None,
     checkpoint_every: int = 10,
     on_query: Callable[[int, dict], None] | None = None,
+    substitute_documents: Callable[[list[str], str], list[str]] | None = None,
 ) -> Path:
     """Route every query under every strategy, record everything, score nothing.
 
     Returns the path of the written RunRecord. If one already exists the sweep is
     skipped, which is what makes a phase script safe to re-run after a partial
     failure: completed runs are not repeated.
+
+    `substitute_documents` swaps what the generation sees AFTER DP retrieval has
+    run, which is what the counterfactual control needs: the same queries, the
+    same document count, the same everything except relevance. It is a hook
+    rather than a flag because the only caller that wants it is that control, and
+    a flag here would put "which experiment am I" inside the sweep.
+
+    Retrieval still decides whether a query has documents at all -- a zero-document
+    query is a property of DP retrieval and stays one under substitution. When the
+    hook is used, `docs` records what generation actually saw and `retrieved_docs`
+    records what retrieval actually found, so a reader can tell the two apart and
+    check that the substitutes really are unrelated.
     """
     out_path = paths.results_dir() / f"{filename}.json"
     if out_path.exists():
@@ -115,13 +128,16 @@ def routed_sweep(
         # the same set. Every quality comparison then confounds the strategy with
         # the evidence, which is the one thing the phase must not do.
         store.reseed_for(question)
-        documents = store.pup_retrieve(question)
-        if not documents:
+        retrieved = store.pup_retrieve(question)
+        if not retrieved:
             # DP retrieval legitimately returning nothing: the RAG instance
             # collapses onto NoRAG and every strategy fires trivially, so these
             # are counted and excluded rather than averaged in (CONTEXT.md).
             zero_docs += 1
             continue
+
+        documents = (retrieved if substitute_documents is None
+                     else substitute_documents(retrieved, question))
 
         row: dict[str, Any] = {
             "query": question,
@@ -129,6 +145,8 @@ def routed_sweep(
             "docs": trace.retrieval_trace(store, question, documents),
             "by_strategy": {},
         }
+        if substitute_documents is not None:
+            row["retrieved_docs"] = trace.retrieval_trace(store, question, retrieved)
         for strategy_name, strategy in strategies.items():
             # Re-seed per generation so a strategy's trajectory does not depend on
             # how much randomness the strategies before it happened to consume.
