@@ -20,10 +20,29 @@ import torch
 
 from probe_models import EPSILON, N_QUERIES, probe
 
-from dprag import run_record
+from dprag import paths, run_record
 from dprag.config import ExperimentConfig
 
 MODEL = "google/gemma-4-12B-it"
+FILENAME = "probe_gemma"
+
+
+def outcome_filename(row: dict) -> str:
+    """Where this run's record goes, which depends on whether it worked.
+
+    A failed probe must not overwrite a successful one. The successful record is
+    the feasibility evidence Phase 3 was committed on -- it carries the weights
+    size, the peak memory and the environment string, and it is how a later pod
+    learns which versions to rebuild the second venv with. A run that dies while
+    downloading has none of that, and writing it over the top loses all of it.
+    That happened twice on 2026-09-12, to a full-disk failure that had nothing to
+    say about feasibility at all.
+
+    So failures go to their own file. Both records survive, the successful one
+    stays where every reference to it points, and the failed one is still on disk
+    for whoever is debugging the pod.
+    """
+    return FILENAME if row.get("loaded") and row.get("generated") else f"{FILENAME}_failed"
 
 
 def main():
@@ -50,12 +69,14 @@ def main():
         print(f"\n  [{row.get('stage')}] {row['error']}")
     print()
 
+    filename = outcome_filename(row)
     out = run_record.write(
         "probe_gemma", base,
         metrics={
             "probed": [MODEL],
             "n_queries": N_QUERIES,
             "epsilon": EPSILON,
+            "succeeded": bool(row.get("loaded") and row.get("generated")),
             "environment": f"torch {torch.__version__} / transformers "
                            f"{transformers.__version__}",
             "note": (
@@ -64,9 +85,15 @@ def main():
                 "length, so leave headroom before committing Phase 3."
             ),
         },
-        per_item=[row], filename="probe_gemma",
+        per_item=[row], filename=filename,
     )
     print(f"saved -> {out}")
+    if filename != FILENAME:
+        kept = paths.results_dir() / f"{FILENAME}.json"
+        print(f"this run failed, so it was written beside "
+              f"{FILENAME}.json rather than over it.")
+        if kept.exists():
+            print(f"the successful record is still at {kept.name}.")
 
 
 if __name__ == "__main__":
