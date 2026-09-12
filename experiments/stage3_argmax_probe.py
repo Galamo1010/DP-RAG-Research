@@ -15,35 +15,56 @@ With `rag_argmax` stored, two counts follow directly:
   with it. **This is what a negative pole lean looks like position by position**,
   and Llama's B_k20_t0.7 has one: lean -0.113 against baseline's -0.025.
 
-Llama rather than gemma-4, for two reasons. B_k20_t0.7 actually operates here --
-66.3% trigger against 26.9% on gemma-4, where it barely fires and so has little
-opportunity to waste or miss anything. And Llama's Phase 2 records exist to check
-against.
+Llama first, for two reasons. B_k20_t0.7 actually operates there -- 66.3% trigger
+against 26.9% on gemma-4, where it barely fires and so has little opportunity to
+waste or miss anything. And Llama's Phase 2 records exist to check against.
+
+OTHER MODELS
+------------
+Qwen needs no probe: its Phase 3 records were generated after `rag_argmax` was
+recorded and already carry it. gemma's were not, and the field cannot be
+back-filled -- it is an argmax over logits that no longer exist -- so gemma gets a
+probe of its own, checked against its Phase 3 records the way Llama's is checked
+against Phase 2.
+
+Sixty queries there too. The counts are per position, so the sample is tens of
+thousands of decisions either way: resampling Qwen's 180 queries down to 56 moves
+the waste rate by at most 2.0 points and the miss rate by 0.9, against gaps
+between configurations of six points and more.
+
+Expect gemma's B column to be the weak one -- at a 26.9% trigger rate only about
+2,059 free positions exist for it to miss anything at, against 7,571 paid
+positions for baseline. baseline and A are what that arm is really for.
 
 WHAT THIS ALSO VERIFIES
 -----------------------
 Recording `rag_argmax` reads a tensor the strategy has already seen and draws no
 randomness, so the generated text must be unchanged. `logits_to_keep=1` likewise.
-Both claims were checked on three queries; this checks them on sixty, against the
-Phase 2 records, and says so per configuration. A mismatch means one of those
-"provably identical" changes was not, and every number below is suspect.
+Both claims were checked on three queries; this checks them on sixty, against
+whichever record already holds this model's un-probed generation, and says so per
+configuration. A mismatch means one of those "provably identical" changes was not,
+and every number below is suspect.
 
-About two hours. Sixty queries is enough: the counts are per position, so this is
-tens of thousands of decisions, not sixty.
+Roughly two hours on the primary model, one on gemma-4 -- the gap is dtype, not
+size. Sixty queries is enough: the counts are per position, so this is tens of
+thousands of decisions, not sixty.
 
     uv run python experiments/stage3_argmax_probe.py
+    uv run python experiments/stage3_argmax_probe.py <model_id>
 """
+
+import sys
 
 from dprag import paths, run_record, sweep, trace
 from dprag.bench import Bench
-from dprag.config import ExperimentConfig
+from dprag.config import ExperimentConfig, gen_dtype_for
 from dprag.dp_model import DPGenerationConfig
 from dprag.strategies import make_strategy_b, strategy_a
 
 EPSILON = 40
 N_QUERIES = 60
 EXPERIMENT = ExperimentConfig(n_queries=200)
-FILENAME = f"stage3_argmax_probe_{N_QUERIES}q_eps{EPSILON}"
+PRIMARY_MODEL = EXPERIMENT.gen_model
 
 CONFIGS = {
     "baseline": sweep.NEVER_AGREE,
@@ -52,19 +73,47 @@ CONFIGS = {
 }
 
 
-def verify_against_phase2(record) -> None:
-    """Byte-compare the regenerated answers with Phase 2's, per configuration."""
-    print("=== identical to Phase 2? ===")
+def filename_for(model: str) -> str:
+    """Where this model's probe is written.
+
+    The primary model keeps the unstamped name it already has on disk. Renaming it
+    would orphan `results/stage3_argmax_probe_60q_eps40.json` and every number
+    already quoted from it, and buy nothing.
+    """
+    if model == PRIMARY_MODEL:
+        return f"stage3_argmax_probe_{N_QUERIES}q_eps{EPSILON}"
+    short = model.split("/")[-1]
+    return f"stage3_argmax_probe_{short}_{N_QUERIES}q_eps{EPSILON}"
+
+
+def comparison_stem(model: str, config: str) -> str:
+    """The record this model's probe has to reproduce token for token.
+
+    Different phases for different models, because that is where each model's
+    un-probed generation lives: the primary model's is Phase 2, every other
+    model's is Phase 3. The question is the same either way -- did recording
+    `rag_argmax` disturb generation.
+    """
+    if model == PRIMARY_MODEL:
+        return f"stage3_2_main_{config}_eps{EPSILON}"
+    short = model.split("/")[-1]
+    return f"stage3_3_cross_{short}_{config}_eps{EPSILON}"
+
+
+def verify_against_existing(record, model: str) -> None:
+    """Byte-compare the regenerated answers with this model's existing ones."""
+    where = "Phase 2" if model == PRIMARY_MODEL else "Phase 3"
+    print(f"=== identical to {where}? ===")
     print("Recording rag_argmax and keeping one position of logits are both")
     print("supposed to leave generation untouched. If they did, every answer here")
-    print("matches the Phase 2 record token for token.")
+    print(f"matches the {where} record token for token.")
     print()
 
     mine = {r["query"]: r for r in record.per_item}
     for name in CONFIGS:
-        path = paths.results_dir() / f"stage3_2_main_{name}_eps{EPSILON}.json"
+        path = paths.results_dir() / f"{comparison_stem(model, name)}.json"
         if not path.exists():
-            print(f"  {name:>11}: no Phase 2 record to compare against")
+            print(f"  {name:>11}: no {where} record to compare against")
             continue
         theirs = {r["query"]: r for r in run_record.load(path).per_item}
 
@@ -89,7 +138,7 @@ def verify_against_phase2(record) -> None:
             verdict = "IDENTICAL"
         else:
             verdict = f"*** {diff} DIFFER ***"
-        absent = f", {missing} not in Phase 2" if missing else ""
+        absent = f", {missing} not in {where}" if missing else ""
         print(f"  {name:>11}: {same} identical, {diff} different{absent}   {verdict}")
         if first_bad:
             print(f"               first divergence on: {first_bad[:60]}")
@@ -130,16 +179,23 @@ def report(record) -> None:
 
 
 def main():
-    exp = EXPERIMENT.with_(gen_epsilon=float(EPSILON))
+    model = sys.argv[1] if len(sys.argv) > 1 else PRIMARY_MODEL
+    # Not the field default: this model's arm has a dtype, and running at any other
+    # one makes the record incomparable with the rest of its own arm -- which is
+    # what the equivalence check below would then fail on, for a reason that has
+    # nothing to do with rag_argmax.
+    exp = EXPERIMENT.with_(gen_model=model, gen_epsilon=float(EPSILON),
+                           gen_dtype=gen_dtype_for(model))
     bench = Bench.build(exp)
     # Slice the full sample rather than asking for sixty: load_queries(n=60) is
     # not guaranteed to return the first sixty of load_queries(n=200), and these
-    # have to be a subset of what Phase 2 ran or there is nothing to compare to.
+    # have to be a subset of what this model already ran or there is nothing to
+    # compare against.
     queries = bench.queries()[:N_QUERIES]
 
     print(f"=== argmax ablation | model={exp.gen_model} | eps={EPSILON} ===")
     print(f"{len(CONFIGS)} configurations x {len(queries)} queries "
-          f"| max_retrieve={exp.max_retrieve}")
+          f"| max_retrieve={exp.max_retrieve} | dtype={exp.gen_dtype}")
     print(f"configurations: {list(CONFIGS)}")
     print(flush=True)
 
@@ -149,7 +205,7 @@ def main():
     )
     path = sweep.routed_sweep(
         bench, exp, CONFIGS, dp_cfg,
-        name="stage3_argmax_probe", filename=FILENAME, queries=queries,
+        name="stage3_argmax_probe", filename=filename_for(model), queries=queries,
         metrics={
             "phase": "3 (argmax ablation)",
             "epsilon": EPSILON,
@@ -163,7 +219,7 @@ def main():
 
     record = run_record.load(path)
     print()
-    verify_against_phase2(record)
+    verify_against_existing(record, model)
     report(record)
 
 
