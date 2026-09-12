@@ -116,12 +116,24 @@ def fingerprint(path: str) -> str:
     Content rather than mtime: the records are copied between the pod and here,
     and a copy changes the timestamp without changing a single answer. Hashing
     two megabytes is far cheaper than re-scoring a record that did not change.
+
+    Line endings are normalised first, because the copying is done by git and
+    git rewrites them. A record checked out on Windows carries CRLF -- 115,717
+    of them in the Qwen phase-3 file -- so hashing the raw bytes made the same
+    record hash differently on the pod and here, every cache entry missed, and
+    a full 9,833-pair BERTScore pass was paid to recompute numbers that were
+    already sitting in results/scores/. The parsed JSON is identical either
+    way: a newline inside a JSON string is the two characters \\n, which git
+    does not touch. So this is the hash being too sensitive, not the file
+    being wrong, and normalising here is cheaper than forcing eol=lf on every
+    result file in .gitattributes.
+
+    Read whole rather than chunked: a 1 MiB boundary can fall between the CR
+    and the LF, and normalising per chunk would then miss that pair. The files
+    are a few megabytes.
     """
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
+    raw = Path(path).read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(raw).hexdigest()
 
 
 def cache_file(stem: str) -> Path:
