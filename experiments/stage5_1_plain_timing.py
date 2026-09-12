@@ -71,9 +71,12 @@ N_QUERIES = 40
 EXPERIMENT = ExperimentConfig(n_queries=200)
 FILENAME = f"stage5_1_plain_timing_{N_QUERIES}q_eps{EPSILON}"
 
-# Generous: the smoke test puts a 4-token query at 40 s for both arms, and 128
-# tokens should land near 90 s. Anything past this is not slowness.
-WATCHDOG_SECONDS = 900
+# Per GENERATION, re-armed before each arm -- not a deadline for the run. The
+# first version armed it once in main(), which made it a 15-minute budget for all
+# 40 queries and duly killed a healthy run at query 11 with a stack trace that
+# looked exactly like the hang it was installed to catch. The longest arm measured
+# so far is 69.9 s.
+WATCHDOG_SECONDS = 300
 
 # The Phase 2 curve this anchors into. Order here is documentation; the points are
 # sorted by the trigger rate read out of each record, not by this list.
@@ -199,12 +202,27 @@ def paired_report(rows: list[dict], curve) -> None:
     print("machine whose k+1 batch scaled differently would change it.")
 
 
-def main():
-    # A query is two generations, so no single one can plausibly take this long.
-    # If one does, the stack of every thread is worth more than a blank terminal:
-    # the first attempt at this run produced no evidence at all.
-    faulthandler.dump_traceback_later(WATCHDOG_SECONDS, exit=True)
+def guarded(label: str, call):
+    """Run one generation under a watchdog, so a real hang leaves a stack.
 
+    Armed per call rather than per run: `dump_traceback_later` sets a deadline
+    from now, and a single arming in main() is a deadline for everything that
+    follows it. Each call reschedules, and the timer is cancelled on the way out
+    so a slow stretch of scoring or reporting cannot trip it.
+    """
+    faulthandler.dump_traceback_later(WATCHDOG_SECONDS, exit=True)
+    try:
+        print(f"        {label} ...", end="", flush=True)
+        began = time.time()
+        result = call()
+        elapsed = time.time() - began
+        print(f" {elapsed:.1f}s", flush=True)
+        return elapsed, result
+    finally:
+        faulthandler.cancel_dump_traceback_later()
+
+
+def main():
     exp = EXPERIMENT.with_(gen_epsilon=float(EPSILON))
     curve = load_curve()                       # fail before an hour of model loading
     bench = Bench.build(exp)
@@ -248,16 +266,12 @@ def main():
             # Re-seeded per arm so neither arm's trajectory depends on how much
             # randomness the other consumed -- the rule routed_sweep already uses.
             torch.manual_seed(exp.seed)
-            began = time.time()
-            text = bench.dp_model.dp_chat(documents, question, dp_cfg)
-            return time.time() - began, text
+            return bench.dp_model.dp_chat(documents, question, dp_cfg)
 
         def run_routed():
             torch.manual_seed(exp.seed)
-            began = time.time()
-            result = Router(bench.dp_model, sweep.NEVER_AGREE, dp_cfg).generate(
+            return Router(bench.dp_model, sweep.NEVER_AGREE, dp_cfg).generate(
                 documents, question)
-            return time.time() - began, result
 
         # Alternate which arm goes first. Under a fixed order anything that drifts
         # within a query -- clock boost, cache state -- lands on the same arm every
@@ -273,19 +287,11 @@ def main():
               f"{first} first", flush=True)
 
         if i % 2 == 0:
-            print("        plain ...", end="", flush=True)
-            plain_seconds, plain_text = run_plain()
-            print(f" {plain_seconds:.1f}s", flush=True)
-            print("        routed ...", end="", flush=True)
-            routed_seconds, routed = run_routed()
-            print(f" {routed_seconds:.1f}s", flush=True)
+            plain_seconds, plain_text = guarded("plain", run_plain)
+            routed_seconds, routed = guarded("routed", run_routed)
         else:
-            print("        routed ...", end="", flush=True)
-            routed_seconds, routed = run_routed()
-            print(f" {routed_seconds:.1f}s", flush=True)
-            print("        plain ...", end="", flush=True)
-            plain_seconds, plain_text = run_plain()
-            print(f" {plain_seconds:.1f}s", flush=True)
+            routed_seconds, routed = guarded("routed", run_routed)
+            plain_seconds, plain_text = guarded("plain", run_plain)
 
         rows.append({
             "query": question,
@@ -301,8 +307,6 @@ def main():
         mark = "" if rows[-1]["identical"] else "   *** ANSWERS DIFFER ***"
         print(f"        ratio {plain_seconds / routed_seconds:.3f}{mark}",
               flush=True)
-
-    faulthandler.cancel_dump_traceback_later()
 
     if not rows:
         raise SystemExit("every query retrieved zero documents; nothing was timed")
