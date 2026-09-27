@@ -87,20 +87,40 @@ def probe(bench, dp_cfg, questions, limit: int) -> tuple[bool, float, float, flo
 
 
 def main():
-    # The ceiling is a property of the CORPUS, not just the model: peak memory
-    # grows with prompt length, and a canary prefix lengthens every document. A
-    # ceiling measured on the plain corpus therefore over-states what the injected
-    # one can hold, and the run it licensed would die partway through. Measured on
-    # a laptop card, attention memory went as the SQUARE of sequence length
-    # (constant MB / tokens^2 across 3.9k, 5.8k and 7.4k tokens), so the extra
-    # ~25 tokens per document do not cost proportionally -- they cost more.
+    # The ceiling is a property of the CORPUS AND THE DTYPE, not just the model.
     #
-    #   uv run python experiments/find_max_retrieve.py [canary_seed]
-    exp = ExperimentConfig(n_queries=QUERIES_PER_PROBE)
-    if len(sys.argv) > 1:
-        exp = exp.with_(canary_seed=int(sys.argv[1]))
-    print(f"=== max_retrieve ceiling | model={exp.gen_model} | "
-          f"{QUERIES_PER_PROBE} queries per probe | "
+    # Corpus: peak memory grows with prompt length and a canary prefix lengthens
+    # every document, so a ceiling measured on the plain corpus over-states what the
+    # injected one holds. Measured on a laptop card, attention memory went as the
+    # SQUARE of sequence length (constant MB/tokens^2 across 3.9k, 5.8k and 7.4k
+    # tokens), so those ~25 extra tokens per document cost more than proportionally.
+    #
+    # Dtype: bfloat16 halves the weights (32 GB -> 16 GB on Llama-3.1-8B), so it
+    # frees more headroom than the whole question is about. A float32 ceiling is
+    # simply the wrong number for a bf16 run -- and defaulting to the field value
+    # made this probe clear a path nobody was going to walk.
+    #
+    #   uv run python experiments/find_max_retrieve.py \
+    #       [canary_seed|-] [dtype] [single_value] [queries_per_probe]
+    #
+    # `single_value` skips the bisection and probes exactly that max_retrieve. That
+    # is what a pre-flight check before a configured run actually needs: not "where
+    # is the wall" but "does the setting I am about to use fit". One probe instead of
+    # a search, minutes instead of an hour.
+    canary_seed = None
+    if len(sys.argv) > 1 and sys.argv[1] not in ("-", "none", "None"):
+        canary_seed = int(sys.argv[1])
+    dtype = sys.argv[2] if len(sys.argv) > 2 else None
+    single = int(sys.argv[3]) if len(sys.argv) > 3 else None
+    per_probe = int(sys.argv[4]) if len(sys.argv) > 4 else (
+        3 if single else QUERIES_PER_PROBE)
+
+    exp = ExperimentConfig(n_queries=per_probe, canary_seed=canary_seed)
+    if dtype:
+        exp = exp.with_(gen_dtype=dtype)
+    print(f"=== max_retrieve {'check' if single else 'ceiling'} | "
+          f"model={exp.gen_model} | dtype={exp.gen_dtype} | "
+          f"{per_probe} queries per probe | "
           f"canary_seed={exp.canary_seed} ===", flush=True)
 
     if not torch.cuda.is_available():
@@ -119,6 +139,33 @@ def main():
     print("-" * 60, flush=True)
 
     tried: list[tuple[int, bool, float, float, float]] = []
+
+    # Single-value mode: one probe, then stop. A pre-flight check before a run that
+    # already has its max_retrieve chosen does not need the wall located, only the
+    # chosen setting cleared -- and the bisection costs one full routed generation
+    # per query per probe, which at 40 documents is roughly 45 s/query.
+    if single is not None:
+        ok, peak, secs, mean_k = probe(bench, dp_cfg, questions, single)
+        print(f"{single:>12} | {mean_k:>5.1f} | {peak:>7.1f} GB | {secs:>7.1f}s | "
+              f"{'OK' if ok else 'OOM'}", flush=True)
+        print("\n" + "=" * 60)
+        if ok:
+            head = 100 * (1 - peak / total_gb)
+            print(f"max_retrieve={single} FITS at dtype={exp.gen_dtype}: "
+                  f"{peak:.1f} GB peak of {total_gb:.0f} GB, {head:.0f}% headroom.")
+            print(f"  k reached {mean_k:.1f} documents, {secs:.1f} s/query.")
+            if head < 15:
+                print("  !! Under 15% headroom. Peak memory moves with prompt "
+                      "length and these were only "
+                      f"{per_probe} queries, so a longer one can still OOM "
+                      "partway through a 100-query run.")
+        else:
+            print(f"max_retrieve={single} does NOT fit at dtype={exp.gen_dtype}.")
+            print("  Lowering it is a methodology decision, not a fix: it changes "
+                  "the retrieval setting away from ADR 0008's and away from every "
+                  "existing result. Stop and decide deliberately.")
+        return
+
     lo, hi = KNOWN_GOOD, KNOWN_BAD
 
     # Confirm the lower bound rather than trusting it: a different transformers
