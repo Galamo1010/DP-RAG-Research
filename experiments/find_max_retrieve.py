@@ -27,6 +27,7 @@ Two things worth knowing when reading the output:
     uv run python experiments/find_max_retrieve.py
 """
 
+import sys
 import time
 
 import torch
@@ -86,9 +87,21 @@ def probe(bench, dp_cfg, questions, limit: int) -> tuple[bool, float, float, flo
 
 
 def main():
+    # The ceiling is a property of the CORPUS, not just the model: peak memory
+    # grows with prompt length, and a canary prefix lengthens every document. A
+    # ceiling measured on the plain corpus therefore over-states what the injected
+    # one can hold, and the run it licensed would die partway through. Measured on
+    # a laptop card, attention memory went as the SQUARE of sequence length
+    # (constant MB / tokens^2 across 3.9k, 5.8k and 7.4k tokens), so the extra
+    # ~25 tokens per document do not cost proportionally -- they cost more.
+    #
+    #   uv run python experiments/find_max_retrieve.py [canary_seed]
     exp = ExperimentConfig(n_queries=QUERIES_PER_PROBE)
+    if len(sys.argv) > 1:
+        exp = exp.with_(canary_seed=int(sys.argv[1]))
     print(f"=== max_retrieve ceiling | model={exp.gen_model} | "
-          f"{QUERIES_PER_PROBE} queries per probe ===", flush=True)
+          f"{QUERIES_PER_PROBE} queries per probe | "
+          f"canary_seed={exp.canary_seed} ===", flush=True)
 
     if not torch.cuda.is_available():
         raise RuntimeError("needs a CUDA GPU")

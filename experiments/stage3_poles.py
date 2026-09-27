@@ -119,8 +119,15 @@ def main():
     # The poles are the grounding the routed runs are read against, so they must
     # run at the same precision as those runs. Left at the field default, Qwen's
     # poles would come out float32 while its Phase 3 records are bfloat16, and
-    # "the documents still shape the answer" would be measured against a
-    # different model than the one that produced the answers.
+    # "the documents still shape the answer" would be measured against a different
+    # model than the one that produced the answers.
+    #
+    # The table is the starting point, not the last word: below, whatever the
+    # source record actually recorded overrides it. The table pins a model's
+    # historical precision, while the record states the precision of the very run
+    # these poles ground -- the stronger claim when the two disagree. A canary probe
+    # deliberately runs Llama at bfloat16, and the table alone would silently drag
+    # its poles back to float32.
     exp = exp.with_(gen_dtype=gen_dtype_for(exp.gen_model))
 
     source_path = paths.results_dir() / f"{source}.json"
@@ -143,6 +150,47 @@ def main():
         print(f"note: rebuilding the source run's corpus (n_docs={n_docs}, "
               f"corpus_seed={corpus_seed}), which differs from this config")
     corpus = load_corpus(limit=n_docs, sample_seed=corpus_seed)
+
+    # A canary run's stored indices point into the INJECTED corpus, so rebuilding
+    # the plain one would silently hand the poles documents with the canaries
+    # stripped off -- the RAG pole would then be measured on evidence that never
+    # contained the secret it is being searched for, and the probe would report a
+    # clean zero for the wrong reason. Nothing would raise.
+    canary_seed = source_record.param("canary_seed", None)
+    if canary_seed is not None:
+        from dprag.canary import generate, inject
+        planted, _ = generate(len(corpus), canary_seed)
+        corpus = inject(corpus, planted)
+        print(f"note: source run used canary_seed={canary_seed}; corpus rebuilt "
+              f"with {len(planted)} canaries injected")
+    exp = exp.with_(canary_seed=canary_seed, n_docs=n_docs, corpus_seed=corpus_seed)
+
+    # Precedence, strongest first: an explicit argument, then what the source run
+    # recorded, then the per-model table.
+    #
+    # The middle case is only trustworthy when the source ran the SAME model. A
+    # canary probe may legitimately take its indices from a small-model record --
+    # retrieval does not depend on the generator, so those indices are the ones any
+    # model would have retrieved -- and inheriting a 1B run's dtype to configure an
+    # 8B run would then be an accident that happened to give the right answer. So
+    # the record's dtype is used only when the models match, and argv[3] exists for
+    # when they do not.
+    if len(sys.argv) > 3:
+        exp = exp.with_(gen_dtype=sys.argv[3])
+        print(f"note: gen_dtype={sys.argv[3]} given explicitly")
+    else:
+        recorded_dtype = source_record.param("gen_dtype", None)
+        source_model = source_record.param("gen_model", None)
+        if recorded_dtype and source_model == exp.gen_model \
+                and recorded_dtype != exp.gen_dtype:
+            print(f"note: source run recorded gen_dtype={recorded_dtype} for this "
+                  f"same model; using it instead of the table's {exp.gen_dtype}")
+            exp = exp.with_(gen_dtype=recorded_dtype)
+        elif recorded_dtype and source_model != exp.gen_model:
+            print(f"note: source ran {source_model} at {recorded_dtype}; NOT "
+                  f"inheriting that dtype for {exp.gen_model}. Using "
+                  f"{exp.gen_dtype} from the table -- pass a third argument to "
+                  f"override.")
 
     print(f"=== Stage 3 poles | source={source} | model={exp.gen_model} "
           f"| dtype={exp.gen_dtype} ===")

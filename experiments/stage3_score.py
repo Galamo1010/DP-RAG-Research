@@ -97,7 +97,10 @@ from dprag.config import ExperimentConfig
 from dprag.medical_flags import WORD_KIND
 from dprag.quality import bertscore_f1, rouge_l_f1
 
-RECORD_GLOB = "stage3_*"
+# Both families: Phase 2/3 writes stage3_*, the canary probe writes canary_*.
+# Leaving canary_* out meant the probe's runs were silently not scored at all --
+# the script printed a full table and simply omitted them.
+RECORD_GLOBS = ("stage3_*", "canary_*")
 POLES_GLOB = "stage3_poles_*"
 CACHE_DIR = "scores"
 
@@ -198,24 +201,51 @@ def fmt(value: float | None, spec: str = "%.4f") -> str:
 # Inputs
 # --------------------------------------------------------------------------
 
-def load_poles() -> dict[str, dict[str, dict]]:
-    """gen_model -> query -> {norag_text, rag_text}.
+def poles_key(record) -> tuple:
+    """What a set of poles, and a run being located against them, must agree on.
 
-    Keyed by model, not by filename. The poles say what a *model* writes with and
-    without the documents, so locating one model's answers against another
-    model's poles is meaningless -- and it fails silently, producing a plausible
-    lean rather than an error.
+    The model, because the poles say what a *model* writes with and without the
+    documents, so locating one model's answers against another's is meaningless.
+
+    AND the corpus. Keying on the model alone was silently wrong as soon as a
+    second corpus existed: a canary probe writes `stage3_poles_<model>_<n>q` for
+    the same model as Phase 2's poles, `by_model[model]` let the later file
+    overwrite the earlier, and every Phase 2/3 grounding number would then have
+    been computed against poles generated on a canary-injected corpus. Nothing
+    raised, and the lean stayed plausible -- the exact failure the by-model keying
+    was introduced to prevent, one level up.
+
+    `canary_seed` identifies the corpus because it is the only thing that changes
+    the document text; n_docs and corpus_seed select which documents, and they are
+    already part of what makes stored indices resolvable.
     """
-    by_model: dict[str, dict[str, dict]] = {}
+    return (
+        record.metric("gen_model") or record.param("gen_model"),
+        record.param("canary_seed", None),
+        record.param("n_docs", None),
+        record.param("corpus_seed", None),
+    )
+
+
+def load_poles() -> dict[tuple, dict[str, dict]]:
+    """(model, canary_seed, n_docs, corpus_seed) -> query -> {norag_text, rag_text}."""
+    by_key: dict[tuple, dict[str, dict]] = {}
+    seen: dict[tuple, str] = {}
     for path in sorted(glob.glob(str(paths.results_dir() / f"{POLES_GLOB}.json"))):
         record = run_record.load(path)
-        model = record.metric("gen_model") or record.param("gen_model")
-        if model is None:
+        key = poles_key(record)
+        if key[0] is None:
             print(f"!! {record.path.stem} names no model and cannot be matched to "
                   "a run; re-run experiments/stage3_poles.py to regenerate it")
             continue
-        by_model[model] = {r["query"]: r for r in record.per_item}
-    return by_model
+        if key in seen:
+            print(f"!! {record.path.stem} and {seen[key]} are both poles for "
+                  f"{key}. One is being discarded and the grounding numbers would "
+                  "depend on which -- move the stale one to results/archive/.")
+            continue
+        seen[key] = record.path.stem
+        by_key[key] = {r["query"]: r for r in record.per_item}
+    return by_key
 
 
 def paid_productivity(strategy_record: dict) -> float | None:
@@ -256,7 +286,7 @@ def grounding(strategy_record: dict, documents: list[str]) -> tuple[int, int]:
 # Gathering every (hypothesis, reference) pair once
 # --------------------------------------------------------------------------
 
-def gather(records, refs, poles_by_model):
+def gather(records, refs, poles_by_key):
     """Per-record pair inventory plus the list of pairs still needing BERTScore.
 
     Every pair in the run is planned first and scored in ONE call, rather than a
@@ -266,8 +296,7 @@ def gather(records, refs, poles_by_model):
     plan = {}
     missing = []
     for record, source_hash in records:
-        model = record.param("gen_model", "unknown")
-        poles = poles_by_model.get(model, {})
+        poles = poles_by_key.get(poles_key(record), {})
         cached = load_cache(record.path.stem, EXP.bertscore_model,
                             EXP.bertscore_rescale, source_hash)
         per_strategy = {}
@@ -554,24 +583,29 @@ def main():
     refs = {q.query: q.reference for q in queries}
     damaged = {q.query: reference_damage(q.reference) for q in queries}
 
-    poles_by_model = load_poles()
-    if not poles_by_model:
+    poles_by_key = load_poles()
+    if not poles_by_key:
         print("!! No poles record found. Quality numbers cannot be told apart from")
         print("!! 'we did less RAG'. Run experiments/stage3_poles.py.")
 
-    found = [p for p in sorted(glob.glob(str(paths.results_dir() / f"{RECORD_GLOB}.json")))
-             if "poles" not in p]
+    found = [
+        p for pattern in RECORD_GLOBS
+        for p in sorted(glob.glob(str(paths.results_dir() / f"{pattern}.json")))
+        if "poles" not in p and "registry" not in p and "detect" not in p
+    ]
     if not found:
-        raise SystemExit("no stage3_* records found; run a phase first")
+        raise SystemExit(
+            f"no records matching {RECORD_GLOBS} found; run a phase first")
     records = [(run_record.load(p), fingerprint(p)) for p in found]
 
     for record, _ in records:
-        model = record.param("gen_model", "unknown")
-        if poles_by_model and model not in poles_by_model:
-            print(f"!! no poles for {model}; grounding unavailable for "
-                  f"{record.path.stem}")
+        key = poles_key(record)
+        if poles_by_key and key not in poles_by_key:
+            print(f"!! no poles matching {key}; grounding unavailable for "
+                  f"{record.path.stem}. A canary run needs poles built on the "
+                  "SAME injected corpus, not Phase 2's.")
 
-    plan, missing = gather(records, refs, poles_by_model)
+    plan, missing = gather(records, refs, poles_by_key)
     fill_bertscore(plan, missing, batch_size)
 
     rows = score_rows(plan, {}, damaged)
