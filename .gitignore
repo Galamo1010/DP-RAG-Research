@@ -180,3 +180,7 @@ out
 # documents/*.pdf
 
 .DS_Store
+
+# 人工審核用的 HTML 與 canary registry 內嵌真實醫病對話文本，不進版控
+review/
+results/canary_registry_*.json

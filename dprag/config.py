@@ -198,6 +198,21 @@ class ExperimentConfig:
     corpus_seed: int = 7           # reproducible corpus sample
     query_seed: int = 42           # reproducible query sample
 
+    # -- Canary insertion (privacy probe) -----------------------------------
+    # None means no injection, which is every experiment written before this
+    # field: the default has to reproduce them exactly, so it cannot be a seed.
+    #
+    # Set it and `Bench.build` prepends one generated secret to every corpus
+    # document (dprag.canary). The seed belongs here rather than in the
+    # experiment because the canaries ARE the ground truth a leakage number is
+    # measured against: a record that does not say which canaries were planted
+    # cannot be checked, and `to_dict()` is what guarantees it gets recorded.
+    #
+    # It also changes the corpus, hence the embeddings, hence retrieval. A run
+    # with a canary_seed is therefore NOT comparable with one without -- it is a
+    # purpose-built privacy probe, not another point in the Phase 2/3 grid.
+    canary_seed: int | None = None
+
     # -- Reproducibility ----------------------------------------------------
     # Seeds retrieval (exponential-mechanism threshold + max_retrieve truncation)
     # AND generation sampling, so a run can be reproduced, or extended one config

@@ -106,10 +106,23 @@ class Bench:
             ),
         )
 
-        if verbose:
-            print(f"Embedding {cfg.n_docs} corpus docs ...")
         started = time.time()
         corpus = load_corpus(limit=cfg.n_docs, sample_seed=cfg.corpus_seed)
+
+        # Canary injection happens HERE, before embedding, because the point of
+        # the probe is that retrieval sees the injected text: a canary added
+        # after embedding would be invisible to the vector store and the
+        # retrieved set would not be the one the leak is measured against.
+        if cfg.canary_seed is not None:
+            from .canary import generate, inject
+            planted, _holdout = generate(len(corpus), cfg.canary_seed)
+            corpus = inject(corpus, planted)
+            if verbose:
+                print(f"Canary: {len(planted)} planted, {len(_holdout)} held out "
+                      f"(seed={cfg.canary_seed})")
+
+        if verbose:
+            print(f"Embedding {len(corpus)} corpus docs ...")
         for doc in corpus:
             engine.add(doc)
         # Force the embedding pass now, so later timings measure generation only.
